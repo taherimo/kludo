@@ -2,7 +2,7 @@
 Kernel Clustering based Protein Domain Assignment
 
 ## Prerequisites
-It is recommended to run KluDo by a Python version of 3.6 or more, however there should not be any problem with running KluDo in any 3.X version. Also the following packages/programs should be installed before using KluDo:
+It is recommended to run KluDo by a Python version of 3.6 or more, however there should be no problem with running KluDo in any 3.x version. Also the following packages/programs must be installed before using KluDo:
 * [numpy](https://numpy.org/) (Python)
 * [scipy](https://www.scipy.org/) (Python)
 * [biopython](https://biopython.org/) (Python)
@@ -12,7 +12,7 @@ It is recommended to run KluDo by a Python version of 3.6 or more, however there
 * [DSSP](https://swift.cmbi.umcn.nl/gv/dssp/) (Linux/Windows/Mac binary executable)
 
 ## Usage
-The examples here are based on Linux operating system. By using -help argument one can see a description of all arguments in KluDo:
+The following examples are based on Linux operating system. By using -help argument one can see a description of all arguments in KluDo:
 ```sh
 python3 kludo.py -help
 ```
@@ -30,13 +30,13 @@ The arguments are as follows:
 *  -diffparamx (Diffusion parameter X)
 *  -diffparamy (Diffusion parameter Y)
 
-Among these arguments three of them are necessary: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are used for them. Values of the arguments -diffparamx and -diffparamy should be passed simultaneously. The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Moreover Kernel type should be choosen from following list:
+Three of the arguments are mandatory: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are utilized. Values of the arguments -diffparamx and -diffparamy should be passed simultaneously. The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Moreover the user can choose the Kernel type from following options:
 * lap-exp-diff (Laplacian Exponential Diffusion Kernel)
 * markov-diff (Markov Diffusion Kernel)
 * reg-lap-diff (Regularized Laplacian Diffusion Kernel)
 * markov-exp-diff (Markov Exponential Diffusion Kernel)
 
-The default values of parameters are as follows:
+The default values of the parameters are as follows:
 * numdomains -> automatic
 * minsegsize  -> 25
 * mindomainsize -> 27
