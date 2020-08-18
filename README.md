@@ -17,24 +17,26 @@ The examples here are based on Linux operating system. By using -help argument o
 python3 kludo.py -help
 ```
 ```
- -help                     Help
- -pdb [PATH]               PDB file Path (*)
- -chainid [ID]             Chain id (*)
- -dssppath [PATH]          DSSP binary file path (*)
- -numdomains [NUMBER]      The number of domains
- -minsegsize [SIZE]        Minimum segment size
- -mindomainsize [SIZE]     Minimum domain size
- -maxalphahelix [SIZE]     Maximum size of alpha-helix to contract
- -maxsegdomratio [RATIO]   Maximum ratio of segment count to domain count
- -kernel [TYPE]            The type of graph node kernel
- -dispall                  Display all candidate partitionings
- -diffparamx [VALUE]       Diffusion parameter X (**)
- -diffparamy [VALUE]       Diffusion parameter Y (**)
+  -help                     Help
+  -pdb [PATH]               PDB file Path (*)
+  -chainid [ID]             Chain id (*)
+  -dssppath [PATH]          DSSP binary file path (*)
+  -numdomains [NUMBER]      The number of domains
+  -minsegsize [SIZE]        Minimum segment size
+  -mindomainsize [SIZE]     Minimum domain size
+  -maxalphahelix [SIZE]     Maximum size of alpha-helix to contract
+  -maxsegdomratio [RATIO]   Maximum ratio of segment count to domain count
+  -kernel [TYPE]            The type of graph node kernel (**)
+  -dispall                  Display all candidate partitionings
+  -diffparamx [VALUE]       Diffusion parameter X (***)
+  -diffparamy [VALUE]       Diffusion parameter Y (***)
 
- *  These arguments are necessary
+ *   These arguments are necessary
 
- ** The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n),
-    respectively, which determine the diffusion parameter, t, for each kernel. (t=xn^y)
+ **  Should be choosen from the list: lap-exp-diff, markov-diff, reg-lap-diff and markov-exp-diff
+
+ *** The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n),
+     respectively, which determine the diffusion parameter, t, for each kernel. (t=xn^y)
 ```
 Among these arguments three of them are necessary: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are used for them. The default values are as follows:
 * numdomains -> automatic
