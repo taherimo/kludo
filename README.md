@@ -30,14 +30,20 @@ The arguments are as follows:
 *  -diffparamx (Diffusion parameter X)
 *  -diffparamy (Diffusion parameter Y)
 
-Among these arguments three of them are necessary: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are used for them. The default values are as follows:
+Among these arguments three of them are necessary: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are used for them. Values of the arguments -diffparamx and -diffparamy should be passed simultaneously. The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Moreover Kernel type should be choosen from following list:
+* lap-exp-diff (Laplacian Exponential Diffusion Kernel)
+* markov-diff (Markov Diffusion Kernel)
+* reg-lap-diff (Regularized Laplacian Diffusion Kernel)
+* markov-exp-diff (Markov Exponential Diffusion Kernel)
+
+The default values of parameters are as follows:
 * numdomains -> automatic
 * minsegsize  -> 25
 * mindomainsize -> 27
 * maxalphahelix -> 30
 * maxsegdomratio -> 1.6
 * kernel -> lap-exp-diff
-* diffparamx -> 0.0105
+* diffparamx -> lap-exp-diff: 0.0105, markov-diff: 0.1024, reg-lap-diff: 0.00005, markov-exp-diff: 0.005
 * diffparamy -> 1
 
 Assume we have downloaded the file 1cid.pdb to the path ~/1cid.pdb and DSSP program is installed in the path /usr/bin/dssp. The following examples show how to run KluDo on Linux:
@@ -45,9 +51,3 @@ Assume we have downloaded the file 1cid.pdb to the path ~/1cid.pdb and DSSP prog
 ```sh
 python3 kludo.py -pdb ~/1cid.pdb -chainid A -dssppath /usr/bin/dssp
 ```
- Kernel type should be choosen from following list:
- lap-exp-diff, markov-diff, reg-lap-diff and markov-exp-diff
-
-
-The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n),
-     respectively, which determine the diffusion parameter, t, for each kernel. (t=xn^y)
