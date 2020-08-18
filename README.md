@@ -27,7 +27,7 @@ The arguments are as follows:
 *  -maxsegdomratio (Maximum ratio of segment count to domain count; default: 1.6)
 *  -kernel (The type of graph node kernel; default: lap-exp-diff)
 *  -dispall (Display all candidate partitionings)
-*  -diffparamx (Diffusion parameter X; lap-exp-diff default: 0.0105, markov-diff default: 0.1024, reg-lap-diff default: 0.00005, markov-exp-diff default: 0.005)
+*  -diffparamx (Diffusion parameter X; default: lap-exp-diff: 0.0105, markov-diff: 0.1024, reg-lap-diff: 0.00005, markov-exp-diff: 0.005)
 *  -diffparamy (Diffusion parameter Y; default: 1)
 
 Three of the arguments are mandatory: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are utilized. Values of the arguments -diffparamx and -diffparamy should be passed simultaneously. The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Moreover the user can choose the Kernel type from following options:
