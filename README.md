@@ -20,31 +20,21 @@ The arguments are as follows:
 *  -pdb (PDB file Path)
 *  -chainid
 *  -dssppath (DSSP binary file path)
-*  -numdomains (The number of domains)
-*  -minsegsize (Minimum segment size)
-*  -mindomainsize (Minimum domain size)
-*  -maxalphahelix (Maximum size of alpha-helix to contract)
-*  -maxsegdomratio (Maximum ratio of segment count to domain count)
-*  -kernel (The type of graph node kernel)
+*  -numdomains (The number of domains; default: automatic)
+*  -minsegsize (Minimum segment size; default: 25)
+*  -mindomainsize (Minimum domain size; default: 27)
+*  -maxalphahelix (Maximum size of alpha-helix to contract; default: 30)
+*  -maxsegdomratio (Maximum ratio of segment count to domain count; default: 1.6)
+*  -kernel (The type of graph node kernel; default: lap-exp-diff)
 *  -dispall (Display all candidate partitionings)
-*  -diffparamx (Diffusion parameter X)
-*  -diffparamy (Diffusion parameter Y)
+*  -diffparamx (Diffusion parameter X; lap-exp-diff default: 0.0105, markov-diff default: 0.1024, reg-lap-diff default: 0.00005, markov-exp-diff default: 0.005)
+*  -diffparamy (Diffusion parameter Y; default: 1)
 
 Three of the arguments are mandatory: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are utilized. Values of the arguments -diffparamx and -diffparamy should be passed simultaneously. The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Moreover the user can choose the Kernel type from following options:
 * lap-exp-diff (Laplacian Exponential Diffusion Kernel)
 * markov-diff (Markov Diffusion Kernel)
 * reg-lap-diff (Regularized Laplacian Diffusion Kernel)
 * markov-exp-diff (Markov Exponential Diffusion Kernel)
-
-The default values of the parameters are as follows:
-* numdomains -> automatic
-* minsegsize  -> 25
-* mindomainsize -> 27
-* maxalphahelix -> 30
-* maxsegdomratio -> 1.6
-* kernel -> lap-exp-diff
-* diffparamx -> lap-exp-diff: 0.0105, markov-diff: 0.1024, reg-lap-diff: 0.00005, markov-exp-diff: 0.005
-* diffparamy -> 1
 
 Assume we have downloaded the file 1cid.pdb to the path ~/1cid.pdb and DSSP program is installed in the path /usr/bin/dssp. The following examples show how to run KluDo on Linux:
 
