@@ -16,29 +16,20 @@ The examples here are based on Linux operating system. By using -help argument o
 ```sh
 python3 kludo.py -help
 ```
-Reaults in:
-```
-  -help                     Help
-  -pdb [PATH]               PDB file Path (*)
-  -chainid [ID]             Chain id (*)
-  -dssppath [PATH]          DSSP binary file path (*)
-  -numdomains [NUMBER]      The number of domains
-  -minsegsize [SIZE]        Minimum segment size
-  -mindomainsize [SIZE]     Minimum domain size
-  -maxalphahelix [SIZE]     Maximum size of alpha-helix to contract
-  -maxsegdomratio [RATIO]   Maximum ratio of segment count to domain count
-  -kernel [TYPE]            The type of graph node kernel (**)
-  -dispall                  Display all candidate partitionings
-  -diffparamx [VALUE]       Diffusion parameter X (***)
-  -diffparamy [VALUE]       Diffusion parameter Y (***)
+The arguments are as follows:
+*  -pdb (PDB file Path)
+*  -chainid
+*  -dssppath (DSSP binary file path)
+*  -numdomains (The number of domains)
+*  -minsegsize (Minimum segment size)
+*  -mindomainsize (Minimum domain size)
+*  -maxalphahelix (Maximum size of alpha-helix to contract)
+*  -maxsegdomratio (Maximum ratio of segment count to domain count)
+*  -kernel (The type of graph node kernel)
+*  -dispall (Display all candidate partitionings)
+*  -diffparamx (Diffusion parameter X)
+*  -diffparamy (Diffusion parameter Y)
 
- *   These arguments are necessary
-
- **  Should be choosen from the list: lap-exp-diff, markov-diff, reg-lap-diff and markov-exp-diff
-
- *** The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n),
-     respectively, which determine the diffusion parameter, t, for each kernel. (t=xn^y)
-```
 Among these arguments three of them are necessary: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are used for them. The default values are as follows:
 * numdomains -> automatic
 * minsegsize  -> 25
@@ -54,3 +45,9 @@ Assume we have downloaded the file 1cid.pdb to the path ~/1cid.pdb and DSSP prog
 ```sh
 python3 kludo.py -pdb ~/1cid.pdb -chainid A -dssppath /usr/bin/dssp
 ```
+ Kernel type should be choosen from following list:
+ lap-exp-diff, markov-diff, reg-lap-diff and markov-exp-diff
+
+
+The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n),
+     respectively, which determine the diffusion parameter, t, for each kernel. (t=xn^y)
