@@ -1182,10 +1182,11 @@ def run(argv):
 
 
     expanded_kernel = np.zeros((n,n))
-
+    
     for i in range(num_vtx):
         for p in graph.vs[i]['name']:
-            expanded_kernel[p,p] = diff_kernel[i,i]
+            for q in graph.vs[i]['name']:
+                expanded_kernel[p,q] = expanded_kernel[q,p] = diff_kernel[i,i]
 
     for i in range(num_vtx - 1):
         for j in range(i+1, num_vtx):
