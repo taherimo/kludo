@@ -36,7 +36,7 @@ Three of the arguments are mandatory: -pdb, -chainid and -dssppath. If you don't
 * reg-lap-diff (Regularized Laplacian Diffusion Kernel; Default value of diffparamx: 0.00005)
 * markov-exp-diff (Markov Exponential Diffusion Kernel; Default value of diffparamx: 0.005)
 
-Assume we have downloaded the file 1cid.pdb to the path ~/1cid.pdb and DSSP program is installed in the path /usr/bin/dssp. The following example shows how to run KluDo:
+Assume we have downloaded the file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) to the path ~/1cid.pdb and DSSP program is installed in the path /usr/bin/dssp. The following example shows how to run KluDo:
 
 ```sh
 python3 kludo.py -pdb ~/1cid.pdb -chainid A -dssppath /usr/bin/dssp
