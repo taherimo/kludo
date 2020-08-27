@@ -33,8 +33,8 @@ The arguments are as follows:
 Three of the arguments are mandatory: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are utilized. Values of the arguments -diffparamx and -diffparamy should be passed simultaneously. The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Moreover the user can choose the Kernel type from following options:
 * lap-exp-diff (Laplacian Exponential Diffusion Kernel; Default value of diffparamx: 0.0105)
 * markov-diff (Markov Diffusion Kernel; Default value of diffparamx: 0.1024)
-* reg-lap-diff (Regularized Laplacian Diffusion Kernel; Default value of diffparamx: 0.00005)
-* markov-exp-diff (Markov Exponential Diffusion Kernel; Default value of diffparamx: 0.005)
+* reg-lap-diff (Regularized Laplacian Diffusion Kernel; Default value of diffparamx: 0.05)
+* markov-exp-diff (Markov Exponential Diffusion Kernel; Default value of diffparamx: 5)
 
 Assume we have downloaded the file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) to the path ~/1cid.pdb and DSSP program is installed in the path /usr/bin/dssp. The following example shows how to run KluDo:
 
