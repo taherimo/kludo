@@ -1,5 +1,5 @@
 # KluDo
-KluDo (**K**ernel C**lu**stering based Protein **Do**main Assignment), is an automatic framework for protein domain assignment, which incorporates graph node kernels as an advanced similarity measure.
+KluDo (Kernel Clustering based Protein Domain Assignment), is an automatic framework for protein domain assignment, which incorporates graph node kernels as an advanced similarity measure.
 
 
 ## Prerequisites
