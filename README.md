@@ -1,5 +1,6 @@
 # KluDo
-Kernel Clustering based Protein Domain Assignment
+KluDo (**K**ernel C**lu**stering based Protein **Do**main Assignment), is an automatic framework for protein domain assignment, which incorporates graph node kernels as an advanced similarity measure.
+
 
 ## Prerequisites
 It is recommended to run KluDo by a Python version of 3.6 or more, however there should be no problem with running KluDo in any 3.x version. Also the following packages/programs must be installed before using KluDo:
