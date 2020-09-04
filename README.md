@@ -31,7 +31,9 @@ The arguments are as follows:
 *  -diffparamx (Diffusion parameter X; Default: depends to kernel type)
 *  -diffparamy (Diffusion parameter Y; Default: 1)
 
-Three of the arguments are mandatory: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are utilized. Values of the arguments -diffparamx and -diffparamy should be passed simultaneously. The parameters diffparamx and diffparamy are coefficient (x) and exponent (y) of node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Moreover the user can choose the Kernel type from following options:
+Three of the arguments are mandatory: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are utilized. Values of the arguments -diffparamx and -diffparamy should be passed simultaneously. These are coefficient (x) and exponent (y) of node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y).
+
+Also users can choose the Kernel type from following options:
 * lap-exp-diff (Laplacian Exponential Diffusion Kernel; Default value of diffparamx: 0.0105)
 * markov-diff (Markov Diffusion Kernel; Default value of diffparamx: 0.1024)
 * reg-lap-diff (Regularized Laplacian Diffusion Kernel; Default value of diffparamx: 0.05)
