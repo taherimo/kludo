@@ -1,5 +1,5 @@
 # KluDo
-KluDo (Kernel based Spectral Clustering for Protein Domain Assignment), is an automatic framework for protein domain assignment, which incorporates graph node kernels as an advanced similarity measure.
+KluDo (Kernel based Clustering for Protein Domain Assignment), is an automatic framework for protein domain assignment, which incorporates graph node kernels as an advanced similarity measure.
 
 
 ## Prerequisites
