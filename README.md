@@ -36,8 +36,8 @@ Three of the arguments are mandatory: -pdb, -chainid and -dssppath. If you don't
 Also users can choose the Kernel type from the following options:
 * lap-exp-diff (Laplacian Exponential Diffusion Kernel; Default value of diffparamx: 0.0105)
 * markov-diff (Markov Diffusion Kernel; Default value of diffparamx: 0.1024)
-* reg-lap-diff (Regularized Laplacian Diffusion Kernel; Default value of diffparamx: 0.05)
-* markov-exp-diff (Markov Exponential Diffusion Kernel; Default value of diffparamx: 5)
+* reg-lap-diff (Regularized Laplacian Diffusion Kernel; Default value of diffparamx: 0.025)
+* markov-exp-diff (Markov Exponential Diffusion Kernel; Default value of diffparamx: 1.3)
 
 Assume we have downloaded the file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) to the path ~/1cid.pdb and DSSP program is installed in the path /usr/bin/dssp. The following example shows how to run KluDo:
 
