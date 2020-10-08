@@ -44,3 +44,5 @@ Assume we have downloaded the file [1cid.pdb](https://files.rcsb.org/download/1C
 ```sh
 python3 kludo.py -pdb ~/1cid.pdb -chainid A -dssppath /usr/bin/dssp
 ```
+## Web application
+KluDo is also available as a web application at: [http://www.cbph.ir/tools/kludo](http://www.cbph.ir/tools/kludo)
