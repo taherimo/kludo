@@ -21,7 +21,7 @@ The arguments are as follows:
 *  -pdb (PDB file Path)
 *  -chainid
 *  -dssppath (DSSP binary file path)
-*  -clustering (The clustering method: spectral or kernel-kmeans; Default: spectral)
+*  -clustering (The clustering method: "spectral" or "kernel-kmeans"; Default: "spectral")
 *  -numdomains (The number of domains; Default: automatic)
 *  -minsegsize (Minimum segment size; Default: 25)
 *  -mindomainsize (Minimum domain size; Default: 27)
