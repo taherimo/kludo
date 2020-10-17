@@ -471,6 +471,7 @@ help_text = """
   -pdb [PATH]               PDB file Path (*)
   -chainid [ID]             Chain id (*)
   -dssppath [PATH]          DSSP binary file path (*)
+  -clustering [METHOD]      The clustering method
   -numdomains [NUMBER]      The number of domains
   -minsegsize [SIZE]        Minimum segment size
   -mindomainsize [SIZE]     Minimum domain size
