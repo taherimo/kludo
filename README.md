@@ -29,16 +29,16 @@ The arguments are as follows:
 *  -maxsegdomratio (Maximum ratio of segment count to domain count; Default: 1.6)
 *  -kernel (The type of graph node kernel; Default: lap-exp-diff)
 *  -dispall (Display all candidate partitionings)
-*  -diffparamx (Diffusion parameter X; Default: depends to kernel type)
-*  -diffparamy (Diffusion parameter Y; Default: 1)
+*  -diffparamx (Diffusion parameter X)
+*  -diffparamy (Diffusion parameter Y)
 
-Three of the arguments are mandatory: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are utilized. Values of the arguments -diffparamx and -diffparamy should be passed simultaneously. These are coefficient (x) and exponent (y) of node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y).
+Three of the arguments are mandatory: -pdb, -chainid and -dssppath. If you don't pass values to the rest of arguments, default values are utilized. Values of the arguments -diffparamx and -diffparamy should be passed simultaneously. These are coefficient (x) and exponent (y) of node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Default values of the arguments -diffparamx and -diffparam depend on the kernel type and clustering algorithm.
 
 Also users can choose the Kernel type from the following options:
-* lap-exp-diff (Laplacian Exponential Diffusion Kernel; Default value of diffparamx: 0.0105)
-* markov-diff (Markov Diffusion Kernel; Default value of diffparamx: 0.1024)
-* reg-lap-diff (Regularized Laplacian Diffusion Kernel; Default value of diffparamx: 0.025)
-* markov-exp-diff (Markov Exponential Diffusion Kernel; Default value of diffparamx: 1.3)
+* lap-exp-diff (Laplacian Exponential Diffusion Kernel)
+* markov-diff (Markov Diffusion Kernel)
+* reg-lap-diff (Regularized Laplacian Diffusion Kernel)
+* markov-exp-diff (Markov Exponential Diffusion Kernel)
 
 Assume we have downloaded the file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) to the path ~/1cid.pdb and DSSP program is installed in the path /usr/bin/dssp. The following example shows how to run KluDo:
 
