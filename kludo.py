@@ -125,7 +125,7 @@ def make_graph(aminoacids,aminoacid_ca_coords, co_alpha_helix_matrix, co_beta_st
                         beta_bridge_in_same_beta_sheet = 1
 
 
-                    result = loaded_model.predict_proba(np.array([num_bb_contacts,num_all_contacts ,co_beta_strand_matrix[i,j],co_alpha_helix_matrix[i,j],hydrogen_bonds[i,j],beta_bridges[i,j],in_same_betasheet,beta_bridge_in_same_beta_sheet,mean_relacc,mean_hphob,ca_dist,j-i]).reshape(1, -1))[0]
+                    result = loaded_model.predict_proba(np.array([num_bb_contacts,num_all_contacts ,co_beta_strand_matrix[i,j],co_alpha_helix_matrix[i,j],hydrogen_bonds[i,j],beta_bridges[i,j],in_same_betasheet,beta_bridge_in_same_beta_sheet,mean_relacc,mean_hphob,j-i,ca_dist]).reshape(1, -1))[0]
 
 
                     g.add_edge(i, j, weight = result[1])
