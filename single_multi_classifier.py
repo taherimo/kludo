@@ -10,8 +10,14 @@ class SingleMultiClassifier():
     def __init__(self):
         f = open(os.path.join(here, 'single_multi_classifier.sav'), 'rb')
         self.weak_classifiers = []
-        for i in range(100):
-            self.weak_classifiers.append(pickle.load(f))
+        #for i in range(100):
+        #self.weak_classifiers.append(pickle.load(f))
+
+        while True:
+            try:
+                self.weak_classifiers.append(pickle.load(f))
+            except EOFError:
+                break
         f.close()
 
 
