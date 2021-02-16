@@ -728,12 +728,6 @@ def run(argv):
     distance_matrix = convert_kernel_to_distance(kernel_matrix, method='norm')
 
 
-    f = open(os.path.join(here, 'single_multi_classifier.sav'), 'rb')
-    weak_classifiers = []
-    for i in range(100):
-        weak_classifiers.append(pickle.load(f))
-    f.close()
-
     if num_domains == None:
 
         num_domains = 1
