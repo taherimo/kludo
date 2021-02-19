@@ -92,7 +92,7 @@ def parse_dssp(input_handle, qchainid):
 
         line = line_byte.decode()
 
-        if re.search('#', line):
+        if re.search('#  RESIDUE', line):
             if line.split()[1]=='RESIDUE':
                 start = True
                 continue
