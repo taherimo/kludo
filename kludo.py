@@ -686,24 +686,24 @@ def run(argv):
     if diff_param_x==None and diff_param_y==None:
         if kernel == 'lap-exp-diff':
             if clustering_method == 'spectral':
-                diff_param_x = 0.0105
+                diff_param_x = 0.1105
             else:
-                diff_param_x = 0.016
+                diff_param_x = 0.112
         elif kernel == 'markov-diff':
             if clustering_method == 'spectral':
-                diff_param_x = 0.1024
+                diff_param_x = 0.4024
             else:
-                diff_param_x = 0.115
+                diff_param_x = 0.409
         elif kernel == 'reg-lap-diff':
             if clustering_method == 'spectral':
-                diff_param_x = 0.025
+                diff_param_x = 0.035
             else:
-                diff_param_x = 0.027
+                diff_param_x = 0.059
         elif kernel == 'markov-exp-diff':
             if clustering_method == 'spectral':
-                diff_param_x = 1.3
+                diff_param_x = 0.61
             else:
-                diff_param_x = 1.4
+                diff_param_x = 0.66
 
         diff_param_y = 1
 
