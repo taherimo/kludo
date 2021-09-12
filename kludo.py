@@ -10,8 +10,8 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from kernels import *
 from protein_structure import *
-from kernel_kmeans import KernelKMeans
 from single_multi_classifier import SingleMultiClassifier
+from tslearn.clustering import KernelKMeans
 
 here = os.path.dirname(__file__)
 
@@ -400,8 +400,7 @@ def cluster(num_domains,graph, aminoacid_resnums, diff_kernel, min_seg_size, seg
             clustering = SpectralClustering(n_clusters=num_domains, assign_labels="kmeans", random_state=0,
                                             affinity='precomputed', n_init=100).fit(diff_kernel)
         else:
-            clustering = KernelKMeans(n_clusters=num_domains, random_state=0, kernel='precomputed').fit(
-                diff_kernel)
+            clustering = KernelKMeans(n_clusters=num_domains, random_state=0, n_init=100,kernel='precomputed').fit(diff_kernel)
 
 
         clusters_by_resnum, clusters_by_vtx_index, clusters_by_index = get_clusters_by_vtx_labels(graph,aminoacid_resnums,clustering.labels_)
