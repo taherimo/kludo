@@ -516,59 +516,63 @@ def run(argv):
     argument_error = False
 
     for i in range(0, len(argv)):
-        if argv[i][0] == '-':
-            if argv[i] == '-help':
+        if argv[i][0:2] == '--':
+            if argv[i] == '--help':
                 print(help_text)
                 return 'help'
-            elif argv[i] == '-pdb':
+            elif argv[i] == '--pdb':
                 pdb_file_path = argv[i + 1]
-            elif argv[i] == '-chainid':
+            elif argv[i] == '--chainid':
                 chain_id = argv[i + 1].upper()
-            elif argv[i] == '-numdomains':
+            elif argv[i] == '--numdomains':
                 num_domains = int(argv[i + 1])
-            elif argv[i] == '-minsegsize':
+            elif argv[i] == '--minsegsize':
                 min_seg_size = int(argv[i + 1])
-            elif argv[i] == '-mindomainsize':
+            elif argv[i] == '--mindomainsize':
                 min_domain_size = int(argv[i + 1])
-            elif argv[i] == '-maxalphahelix':
+            elif argv[i] == '--maxalphahelix':
                 max_alpha_helix_size_to_contract = int(argv[i + 1])
-            elif argv[i] == '-maxsegdomratio':
+            elif argv[i] == '--maxsegdomratio':
                 seg_numdomians_ratio = float(argv[i + 1])
-            elif argv[i] == '-kernel':
+            elif argv[i] == '--kernel':
                 kernel = argv[i + 1]
-            elif argv[i] == '-dispall':
+            elif argv[i] == '--dispall':
                 display_all_partiotionings = True
-            elif argv[i] == '-diffparamx':
+            elif argv[i] == '--diffparamx':
                 diff_param_x = float(argv[i + 1])
-            elif argv[i] == '-diffparamy':
+            elif argv[i] == '--diffparamy':
                 diff_param_y = float(argv[i + 1])
-            elif argv[i] == '-dssppath':
+            elif argv[i] == '--dssppath':
                 dssp_path = argv[i + 1]
-            elif argv[i] == '-clustering':
+            elif argv[i] == '--clustering':
                 clustering_method = argv[i + 1]
+            else:
+                print(f'Error: Unknown argument {argv[i]}')
+                argument_error = True
 
 
 
     if pdb_file_path=='':
-        print('Error: The argument -pdb is necessary')
+        print('Error: The argument --pdb is necessary')
         argument_error = True
     if chain_id=='':
-        print('Error: The argument -chainid is necessary')
+        print('Error: The argument --chainid is necessary')
         argument_error = True
     if dssp_path=='':
-        print('Error: The argument -dssppath is necessary')
+        print('Error: The argument --dssppath is necessary')
         argument_error = True
 
     if clustering_method not in {'spectral', 'kernel-kmeans'}:
-        print('Error: Invalid argument value for -clustering')
+        print('Error: Invalid argument value for --clustering')
         argument_error = True
 
     if (diff_param_x == None and diff_param_y != None) or (diff_param_x != None and diff_param_y == None):
-        print('Error: The arguments -diffparamx and -diffparamy should be passed simultaneously')
+        print('Error: The arguments --diffparamx and --diffparamy should be passed simultaneously')
         argument_error = True
 
     if argument_error:
         return 'argument error'
+    
 
     path_error = False
 
