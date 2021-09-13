@@ -45,7 +45,7 @@ Also for the argument --clustering there are following options:
 * spectral (default)
 * kernel-kmeans
 
-Assume we have downloaded the file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) to the path ~/1cid.pdb and DSSP program is installed in the path /usr/bin/dssp. The following example shows how to run KluDo:
+As an example for the pdb file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) stored in the path ~/1cid.pdb and DSSP program installed in the path /usr/bin/dssp the following command runs kludo with minimal arguments:
 
 ```sh
 python3 kludo.py --pdb ~/1cid.pdb --chainid A --dssppath /usr/bin/dssp
