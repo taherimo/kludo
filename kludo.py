@@ -478,8 +478,8 @@ help_text = """
   -maxsegdomratio [RATIO]   Maximum ratio of segment count to domain count
   -kernel [TYPE]            The type of graph node kernel (**)
   -dispall                  Display all candidate partitionings
-  -diffparamx [VALUE]       Diffusion parameter X (***)
-  -diffparamy [VALUE]       Diffusion parameter Y (***)
+  -bw_x [VALUE]       Diffusion parameter X (***)
+  -bw_y [VALUE]       Diffusion parameter Y (***)
  
   *
   These arguments are necessary
@@ -492,7 +492,7 @@ help_text = """
    markov-exp-diff
 
   ***
-  The parameters diffparamx and diffparamy are coefficient
+  The parameters bw_x and bw_y are coefficient
   (x) and exponent (y) of node count (n) respectively, which
   determine the diffusion parameter, t, for each kernel. (t=xn^y)
 """
@@ -538,9 +538,9 @@ def run(argv):
                 kernel = argv[i + 1]
             elif argv[i] == '--dispall':
                 display_all_partiotionings = True
-            elif argv[i] == '--diffparamx':
+            elif argv[i] == '--bw_x':
                 bw_x = float(argv[i + 1])
-            elif argv[i] == '--diffparamy':
+            elif argv[i] == '--bw_y':
                 bw_y = float(argv[i + 1])
             elif argv[i] == '--dssppath':
                 dssp_path = argv[i + 1]
@@ -567,7 +567,7 @@ def run(argv):
         argument_error = True
 
     if (bw_x == None and bw_y != None) or (bw_x != None and bw_y == None):
-        print('Error: The arguments --diffparamx and --diffparamy should be passed simultaneously')
+        print('Error: The arguments --bw_x and --bw_y should be passed simultaneously')
         argument_error = True
 
     if argument_error:
