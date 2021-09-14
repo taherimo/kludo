@@ -1,5 +1,5 @@
 # KluDo
-KluDo (Diffusion Kernel-based Clustering of Graph Nodes for Protein Domain Assignment), is an automatic framework for protein domain assignment which incorporates diffusion kernels on protein graphs.
+KluDo (Diffusion Kernel-based Clustering of Graph Nodes for Protein Domain Assignment), is an automatic framework for protein domain assignment, which incorporates diffusion kernels on protein graphs.
 
 
 ## Prerequisites
@@ -30,10 +30,10 @@ The arguments are as follows:
 *  --maxsegdomratio (Maximum ratio of segment count to domain count; Default: 1.6)
 *  --kernel (The type of graph node kernel; Default: lap-exp-diff)
 *  --dispall (Display all candidate partitionings)
-*  --diffparamx (Diffusion parameter X)
-*  --diffparamy (Diffusion parameter Y)
+*  --bw_x (Bandwidth parameter x)
+*  --bw_y (Bandwidth parameter y)
 
-Three of the arguments are mandatory: --pdb, --chainid and --dssppath. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --diffparamx and --diffparamy should be passed simultaneously. These are coefficient (x) and exponent (y) of the node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Default values of the arguments --diffparamx and --diffparam depend on the kernel type and clustering algorithm.
+Three of the arguments are mandatory: --pdb, --chainid and --dssppath. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --bw_x and --bw_y should be passed simultaneously. These are coefficient (x) and exponent (y) of the node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Default values of the arguments --bw_x and --diffparam depend on the kernel type and clustering algorithm.
 
 Fore the argument --kernel users can choose one of the following options:
 * markov-diff (Markov Diffusion Kernel, default)
