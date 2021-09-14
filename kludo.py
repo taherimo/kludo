@@ -84,7 +84,7 @@ def make_graph(aminoacids,aminoacid_ca_coords, co_alpha_helix_matrix, co_beta_st
     loaded_model = pickle.load(open(os.path.join(here, 'edge_weight_predictor.sav'), 'rb'))
 
     g = Graph()
-    main_chain_atoms = {'N', 'CA', 'C', 'O'}
+
     for i in range(0, len(aminoacids)):
         g.add_vertex([i],acc = acc[i], hydphob= hydphob[i], ca_coord = aminoacid_ca_coords[i])
 
