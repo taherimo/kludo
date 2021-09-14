@@ -6,7 +6,7 @@ KluDo (Kernel based Clustering for Protein Domain Assignment), is an automatic f
 It is recommended to run KluDo by a Python version of 3.6 or more, however there should be no problem with running KluDo in any 3.x version. Also the following packages/programs must be installed before using KluDo:
 * [numpy](https://numpy.org/) (Python)
 * [scipy](https://www.scipy.org/) (Python)
-* [biopython](https://biopython.org/) (Python)
+* [atomium](https://atomium.samireland.com/) (Python)
 * [igraph](https://igraph.org/python/) (Python)
 * [sklearn](http://scikit-learn.github.io/stable) (Python)
 * [tslearn](https://tslearn.readthedocs.io/) (Python)
