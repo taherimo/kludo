@@ -478,8 +478,8 @@ help_text = """
   -maxsegdomratio [RATIO]   Maximum ratio of segment count to domain count
   -kernel [TYPE]            The type of graph node kernel (**)
   -dispall                  Display all candidate partitionings
-  -bw_x [VALUE]       Diffusion parameter X (***)
-  -bw_y [VALUE]       Diffusion parameter Y (***)
+  -bw_x [VALUE]             Bandwidth parameter X (***)
+  -bw_y [VALUE]             Bandwidth parameter Y (***)
  
   *
   These arguments are necessary
@@ -492,9 +492,9 @@ help_text = """
    markov-exp-diff
 
   ***
-  The parameters bw_x and bw_y are coefficient
-  (x) and exponent (y) of node count (n) respectively, which
-  determine the diffusion parameter, t, for each kernel. (t=xn^y)
+  The parameters bw_x and bw_y are coefficient (x) and exponent (y)
+  of protein size (n) respectively, which determine the bandwidth
+  parameter (β or t) of each kernel. (xn^y)
 """
 
 def run(argv):
