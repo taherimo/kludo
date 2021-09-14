@@ -508,8 +508,8 @@ def run(argv):
     min_domain_size = 27
     kernel = 'markov-diff'
     display_all_partiotionings = False
-    diff_param_x = None
-    diff_param_y = None
+    bw_x = None
+    bw_y = None
     dssp_path = ''
     clustering_method = 'spectral'
 
@@ -539,9 +539,9 @@ def run(argv):
             elif argv[i] == '--dispall':
                 display_all_partiotionings = True
             elif argv[i] == '--diffparamx':
-                diff_param_x = float(argv[i + 1])
+                bw_x = float(argv[i + 1])
             elif argv[i] == '--diffparamy':
-                diff_param_y = float(argv[i + 1])
+                bw_y = float(argv[i + 1])
             elif argv[i] == '--dssppath':
                 dssp_path = argv[i + 1]
             elif argv[i] == '--clustering':
@@ -566,7 +566,7 @@ def run(argv):
         print('Error: Invalid argument value for --clustering')
         argument_error = True
 
-    if (diff_param_x == None and diff_param_y != None) or (diff_param_x != None and diff_param_y == None):
+    if (bw_x == None and bw_y != None) or (bw_x != None and bw_y == None):
         print('Error: The arguments --diffparamx and --diffparamy should be passed simultaneously')
         argument_error = True
 
@@ -686,42 +686,42 @@ def run(argv):
 
     num_vtx = len(graph.vs)
 
-    if diff_param_x==None and diff_param_y==None:
+    if bw_x==None and bw_y==None:
         if kernel == 'lap-exp-diff':
             if clustering_method == 'spectral':
-                diff_param_x = 0.1105
+                bw_x = 0.1105
             else:
-                diff_param_x = 0.112
+                bw_x = 0.112
         elif kernel == 'markov-diff':
             if clustering_method == 'spectral':
-                diff_param_x = 0.4024
+                bw_x = 0.4024
             else:
-                diff_param_x = 0.409
+                bw_x = 0.409
         elif kernel == 'reg-lap-diff':
             if clustering_method == 'spectral':
-                diff_param_x = 0.035
+                bw_x = 0.035
             else:
-                diff_param_x = 0.059
+                bw_x = 0.059
         elif kernel == 'markov-exp-diff':
             if clustering_method == 'spectral':
-                diff_param_x = 0.61
+                bw_x = 0.61
             else:
-                diff_param_x = 0.66
+                bw_x = 0.66
 
-        diff_param_y = 1
+        bw_y = 1
 
 
-    diff_param = diff_param_x * (num_vtx ** diff_param_y)
+    bw = bw_x * (num_vtx ** bw_y)
 
 
     if kernel =='lap-exp-diff':
-        kernel_matrix = lap_exp_diff_kernel(graph, diff_param)
+        kernel_matrix = lap_exp_diff_kernel(graph, bw)
     elif kernel == 'markov-diff':
-        kernel_matrix = markov_diff_kernel(graph, diff_param)
+        kernel_matrix = markov_diff_kernel(graph, bw)
     elif kernel=='reg-lap-diff':
-        kernel_matrix = reg_lap_kernel(graph, diff_param)
+        kernel_matrix = reg_lap_kernel(graph, bw)
     elif kernel == 'markov-exp-diff':
-        kernel_matrix = markov_exp_diff_kernel(graph, diff_param)
+        kernel_matrix = markov_exp_diff_kernel(graph, bw)
 
     if np.isinf(kernel_matrix).any():
         print("Error: Too large diffusion parameter")
@@ -825,4 +825,3 @@ def run(argv):
 
 if __name__ == "__main__":
     run(sys.argv[1:])
-
