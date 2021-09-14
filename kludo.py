@@ -94,23 +94,23 @@ def make_graph(aminoacids,aminoacid_ca_coords, co_alpha_helix_matrix, co_beta_st
 
 
 
-            ca_dist = np.linalg.norm(aminoacid_ca_coords[i] - aminoacid_ca_coords[j])
+            ca_dist = np.linalg.norm(np.subtract(aminoacid_ca_coords[i], aminoacid_ca_coords[j]))
             if ca_dist <= 15:
                 # g.add_edge(i, j, weight=gamma * co_beta_strand_matrix[i,j] + 1)
 
                 num_all_contacts = 0
                 num_bb_contacts = 0
-                for atom1 in aminoacids[i]:
-                    if atom1.get_name() in main_chain_atoms:
-                        for atom2 in aminoacids[j]:
-                            dist = np.linalg.norm(atom1.get_coord() - atom2.get_coord())
+                for atom1 in aminoacids[i].atoms():
+                    if not atom1.is_side_chain:
+                        for atom2 in aminoacids[j].atoms():
+                            dist = np.linalg.norm(np.subtract(atom1.location, atom2.location))
                             if dist <= 4:
                                 num_all_contacts += 1
-                                if atom2.get_name() in main_chain_atoms:
+                                if not atom2.is_side_chain:
                                     num_bb_contacts += 1
                     else:
-                        for atom2 in aminoacids[j]:
-                            dist = np.linalg.norm(atom1.get_coord() - atom2.get_coord())
+                        for atom2 in aminoacids[j].atoms():
+                            dist = np.linalg.norm(np.subtract(atom1.location, atom2.location))
                             if dist <= 4:
                                 num_all_contacts += 1
 

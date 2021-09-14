@@ -1,84 +1,29 @@
-import Bio.PDB
+import atomium
 import numpy as np
 
 def parse_pdb(pdb_file_path, pdbid, chainid):
-    pdbparser = Bio.PDB.PDBParser()
-    structure = pdbparser.get_structure(pdbid, pdb_file_path)
-    model = structure[0]
 
-    if chainid not in model:
+    chain = atomium.open(pdb_file_path).model.chain(chainid)
+
+    if chain is None:
         return 'invalid chain'
-
-    chain = model[chainid]
-
-
-    d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
-         'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
-         'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W',
-         'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M',
-         'SEC': 'U', 'PYL': 'O', 'GLX': 'Z', 'ASX': 'B', 'CGU': 'X',
-         'MSE': 'X', 'BHD': 'X', 'CSS': 'X', 'PCA': 'X', 'TPQ': 'X',
-         'FME': 'X', 'OCS': 'X', 'ABA': 'X', 'SEP': 'X', 'HIC': 'X',
-         'TRQ': 'X', 'M3L': 'X', 'CSO': 'X', 'TPO': 'X', 'MHO': 'X',
-         'BH2': 'X', 'UNK': 'X', 'MEN': 'X', 'LLP': 'X', 'HYP': 'X',
-         'TRN': 'X', 'FGL': 'X', 'CSB': 'X', 'MDO': 'X', 'SVA': 'X',
-         'GMA': 'X', 'SME': 'X', 'PTR': 'X', 'CSD': 'X', 'KCX': 'X',
-         'CYG': 'X', 'CCS': 'X', 'SCH': 'X', 'TRO': 'X', 'SE7': 'X',
-         'NLE': 'X', 'ORN': 'X', 'MHS': 'X', 'AGM': 'X', 'MGN': 'X',
-         'SMC': 'X', 'CSX': 'X', 'LYZ': 'X', 'EYS': 'X', 'CSP': 'X',
-         'CXM': 'X', 'MLZ': 'X', 'AAR': 'X', 'MEA': 'X', 'NEP': 'X',
-         'MIS': 'X', 'CME': 'X', 'SAC': 'X', 'CYN': 'X', 'DNP': 'X',
-         'BTN': 'X', 'IAS': 'X', 'MSO': 'X', 'ALS': 'X', 'CAS': 'X',
-         'DDZ': 'X', 'MLY': 'X', 'CGN': 'X', 'BFD': 'X', 'CZZ': 'X',
-         'CMH': 'X', 'MME': 'X', '143': 'X', 'PHD': 'X', 'AR4': 'X',
-         'DSN': 'X', 'YCM': 'X', 'TYI': 'X', '175': 'X', 'NCB': 'X',
-         'NC1': 'X', 'CSR': 'X', 'AHB': 'X', 'AYA': 'X', 'LAL': 'X',
-         'TRW': 'X', 'MCL': 'X', 'TYS': 'X', 'TYY': 'X', 'SEB': 'X',
-         'LED': 'X', 'KST': 'X', 'LCK': 'X', 'DMG': 'X', 'OHI': 'X',
-         'CS4': 'X', 'CSU': 'X', 'OMT': 'X', 'PR3': 'X', 'MED': 'X',
-         'SNC': 'X', 'PSH': 'X', 'NIY': 'X', '5VV': 'X', 'DTY': 'X',
-         'SLZ': 'X', 'ALY': 'X', 'ESD': 'X', 'FTR': 'X', 'LLZ': 'X',
-         'KPI': 'X', 'DAB': 'X', '0AF': 'X', 'BIF': 'X', 'XCN': 'X',
-         'HOX': 'X', 'NFA': 'X', 'ARO': 'X', 'CSZ': 'X', 'HIP': 'X',
-         'QPA': 'X', 'N80': 'X', 'M0H': 'X', 'AGT': 'X', 'PN2': 'X',
-         '4HH': 'X', 'HTR': 'X', 'TOX': 'X', 'PBF': 'X', 'OLD': 'X',
-         'KFP': 'X', '4IN': 'X', 'DHA': 'X', 'OSE': 'X', 'MIR': 'X',
-         'FP9': 'X', 'FT6': 'X', '2CO': 'X', 'SDP': 'X', 'OYL': 'X',
-         'SCY': 'X', 'SCS': 'X', '6DN': 'X', 'HAR': 'X', 'LYR': 'X',
-         'CAF': 'X', 'HIQ': 'X', '0A9': 'X', 'BCS': 'X', 'BYR': 'X',
-         'DYA': 'X', 'DDE': 'X', 'SL5': 'X', 'CSW': 'X', 'CGV': 'X',
-         'SEE': 'X', 'DAL': 'X', 'OCY': 'X', 'IYR': 'X', 'KOR': 'X',
-         '6V1': 'X', 'CY3': 'X'}
 
     aminoacids = []
     aminoacid_resnums = []
     aminoacid_letters = []
     aminoacid_ca_coords = []
 
-    for res in Bio.PDB.Selection.unfold_entities(chain, 'R'):
-        # if res.get_id()[0] == ' ' and res.get_resname() != 'UNK':
-        # print(res.get_id(), res.get_resname())
-        # if res.get_resname() not in {'HOH','WAT','UNK',' CA', 'BOG', 'CMP','FES',' CO','SO4',' ZN',' MG','NAD','BGC','FUC'}:
-        if res.get_resname() in d.keys():
-            resnum = str(res.get_id()[1])
-            if res.get_id()[2] != ' ':
-                resnum = resnum + res.get_id()[2]
-            aminoacid_resnums.append(resnum)
-            aminoacid_letters.append(d[res.get_resname()])
+    for res in chain.residues():
+        aminoacids.append(res)
+        aminoacid_resnums.append(res.id.split('.')[1])
+        aminoacid_letters.append(res.code)
+        for atom in res.atoms():
+            if atom.name == 'CA':
+                aminoacid_ca_coords.append(atom.location)
+                break
 
-            if 'CA' in res:
-                aminoacid_ca_coords.append(res['CA'].get_coord())
-            else:
-                atom_coords = []
-                for atom in res:
-                    atom_coords.append(atom.get_coord())
-                atom_coords_sum = [sum(x) for x in zip(*atom_coords)]
-                aminoacid_ca_coords.append(np.asarray([x / len(atom_coords) for x in atom_coords_sum]))
-
-            aminoacids.append(res)
 
     return aminoacids, aminoacid_ca_coords, aminoacid_letters, aminoacid_resnums
-
 
 def parse_dssp(input_handle, qchainid):
     # import pandas as pd
