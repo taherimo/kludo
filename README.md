@@ -14,9 +14,9 @@ It is recommended to run KluDo by a Python version of 3.6 or more, however there
 * [DSSP](https://swift.cmbi.umcn.nl/gv/dssp/) (Linux/Windows/Mac binary executable)
 
 ## Usage
-The following commands are based on Linux operating system. By using -help argument one can see a description of all arguments in KluDo:
+The following commands are based on Linux operating system. By using --help argument one can see a description of all arguments in KluDo:
 ```sh
-python3 kludo.py -help
+python3 kludo.py --help
 ```
 The arguments are as follows:
 *  --pdb (PDB file Path)
