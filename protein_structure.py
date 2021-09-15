@@ -17,10 +17,11 @@ def parse_pdb(pdb_file_path, pdbid, chainid):
         aminoacids.append(res)
         aminoacid_resnums.append(res.id.split('.')[1])
         aminoacid_letters.append(res.code)
-        for atom in res.atoms():
-            if atom.name == 'CA':
-                aminoacid_ca_coords.append(atom.location)
-                break
+        atom_locs = {atom.name: atom.location for atom in res.atoms()}
+        if 'CA' in atom_locs:
+            aminoacid_ca_coords.append(atom_locs['CA'])
+        else:
+            aminoacid_ca_coords.append(np.mean(list(atom_locs.values()),axis=0))
 
 
     return aminoacids, aminoacid_ca_coords, aminoacid_letters, aminoacid_resnums
