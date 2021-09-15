@@ -33,7 +33,7 @@ The arguments are as follows:
 *  --bw_x (Bandwidth parameter x)
 *  --bw_y (Bandwidth parameter y)
 
-Two of the arguments are mandatory: --pdb and --chainid. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --bw_x and --bw_y should be passed simultaneously. These are coefficient (x) and exponent (y) of the node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Default values of the arguments --bw_x and --diffparam depend on the kernel type and clustering algorithm.
+Two of the arguments are mandatory: --pdb and --chainid. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --bw_x and --bw_y should be passed simultaneously. These are coefficient (x) and exponent (y) of the node count (n), respectively, which determine the bandwidth parameter (β or t) for each kernel (t=xn^y). Default values of the arguments --bw_x and --bw_y depend on the kernel type and the clustering algorithm.
 
 Fore the argument --kernel users can choose one of the following options:
 * markov-diff (Markov Diffusion Kernel, default)
