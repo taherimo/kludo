@@ -16,7 +16,7 @@ It is recommended to run KluDo by a Python version of 3.6 or more, however there
 ## Usage
 The following commands are based on Linux operating system. By using --help argument one can see a description of all arguments in KluDo:
 ```sh
-python3 kludo.py --help
+$ python3 kludo.py --help
 ```
 The arguments are as follows:
 *  --pdb (PDB file Path)
@@ -48,7 +48,7 @@ Also for the argument --clustering there are following options:
 As an example assuming that the pdb file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) is stored in the path ~/1cid.pdb the following command runs KluDo with the minimal arguments:
 
 ```sh
-python3 kludo.py --pdb ~/1cid.pdb --chainid A
+$ python3 kludo.py --pdb ~/1cid.pdb --chainid A
 ```
 ## Web application
 KluDo is also available as a web application at: [http://www.cbph.ir/tools/kludo](http://www.cbph.ir/tools/kludo)
