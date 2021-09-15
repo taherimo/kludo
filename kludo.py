@@ -320,41 +320,6 @@ def remove_redundant_segments(labels, num_domains, seg_numdomians_ratio, distanc
             break
 
 
-def calc_sil(clusters, distance_matrix):
-    n = distance_matrix.shape[0]
-
-    a = np.zeros(n)
-    b = np.zeros(n)
-
-    for i in range(len(clusters)):
-        for j in range(len(clusters)):
-            if i != j:
-                for k in clusters[i]:
-                    # total = 0
-                    distances = sorted(distance_matrix[k, clusters[j]])
-                    total = sum(distances) / len(distances)
-                    # for p in clusters[j]:
-                    #     total += kernel_matrix[k,p]
-                    # total /= len(clusters[j])
-                    # print(k, i, j, total)
-                    b[k] = min(b[k], total)
-            else:
-                for k in clusters[i]:
-                    # total = 0
-                    distances = []
-                    for p in clusters[j]:
-                        if k != p:
-                            # total += kernel_matrix[k,p]
-                            distances.append(distance_matrix[k, p])
-                            distances.sort()
-                    total = sum(distances) / len(distances)
-                    # total /= len(clusters[j]) - 1
-                    a[k] = total
-
-    sil_scores = [(x2 - x1) / max(x1, x2) for (x1, x2) in zip(a, b)]
-    return np.mean(sil_scores)
-
-
 def get_small_segments_idx(segments, min_seg_size):
     segments_size = [segments[i][1] - segments[i][0] + 1 for i in range(len(segments))]
 
