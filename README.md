@@ -20,8 +20,8 @@ python3 kludo.py --help
 ```
 The arguments are as follows:
 *  --pdb (PDB file Path)
-*  --chainid
-*  --dssppath (DSSP binary file path)
+*  --chainid (Chain ID)
+*  --dssppath (DSSP binary file path; Default: /usr/bin/dssp)
 *  --clustering (The clustering method: "spectral" or "kernel-kmeans"; Default: "spectral")
 *  --numdomains (The number of domains; Default: automatic)
 *  --minsegsize (Minimum segment size; Default: 25)
@@ -33,7 +33,7 @@ The arguments are as follows:
 *  --bw_x (Bandwidth parameter x)
 *  --bw_y (Bandwidth parameter y)
 
-Three of the arguments are mandatory: --pdb, --chainid and --dssppath. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --bw_x and --bw_y should be passed simultaneously. These are coefficient (x) and exponent (y) of the node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Default values of the arguments --bw_x and --diffparam depend on the kernel type and clustering algorithm.
+Two of the arguments are mandatory: --pdb and --chainid. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --bw_x and --bw_y should be passed simultaneously. These are coefficient (x) and exponent (y) of the node count (n), respectively, which determine the diffusion parameter, t, for each kernel (t=xn^y). Default values of the arguments --bw_x and --diffparam depend on the kernel type and clustering algorithm.
 
 Fore the argument --kernel users can choose one of the following options:
 * markov-diff (Markov Diffusion Kernel, default)
