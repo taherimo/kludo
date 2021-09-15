@@ -1,5 +1,5 @@
 # KluDo
-KluDo (Diffusion Kernel-based Clustering of Graph Nodes for Protein Domain Assignment), is an automatic framework for protein domain assignment, which incorporates diffusion kernels on protein graphs.
+KluDo (Diffusion Kernel-based Clustering of Graph Nodes for Protein Domain Assignment), is an automatic framework that incorporates diffusion kernels on protein graphs as affinity measures between residues to decompose protein structures into structural domains.
 
 
 ## Prerequisites
