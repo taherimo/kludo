@@ -30,8 +30,8 @@ The arguments are as follows:
 *  --maxsegdomratio (Maximum ratio of segment count to domain count; default: 1.6)
 *  --kernel (The type of graph node kernel; default: lap-exp-diff)
 *  --dispall (Display all candidate partitionings)
-*  --bw_x (Bandwidth parameter x)
-*  --bw_y (Bandwidth parameter y)
+*  --bw_a (coefficient of bandwidth coefficient)
+*  --bw_b (power of radius of gyration to calculate bandwidth parameter)
 
 Two of the arguments are mandatory: --pdb and --chainid. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --bw_x and --bw_y should be passed simultaneously. These are coefficient (x) and exponent (y) of the node count (n), respectively, which determine the bandwidth parameter (β or t) for each kernel (t=xn^y). Default values of the arguments --bw_x and --bw_y depend on the kernel type and the clustering algorithm.
 
