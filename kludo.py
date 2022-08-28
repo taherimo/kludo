@@ -420,7 +420,7 @@ def cluster(num_domains, diff_kernel, min_seg_size, max_segdom_ratio, distance_m
             clustering_method, alpha_helices, max_alpha_helix_size_to_merge, hydphob):
     # try:
 
-    if clustering_method == 'spectral':
+    if clustering_method == 'SP':
         no_err = False
         random_state = 0
         while not no_err:
@@ -434,7 +434,7 @@ def cluster(num_domains, diff_kernel, min_seg_size, max_segdom_ratio, distance_m
                 random_state += 1
                 # pass
 
-    elif clustering_method == 'kernel-kmeans':
+    elif clustering_method == 'KK':
         no_err = False
         random_state = 0
         while not no_err:
@@ -569,10 +569,10 @@ help_text = """
  
   **
   Type should be choosen from:
-   lap-exp-diff
-   markov-diff
-   reg-lap-diff
-   markov-exp-diff
+   LED
+   MD
+   RL
+   MED
 
   ***
   The parameters bw_a and bw_b are coefficient (x) and exponent (y)
@@ -590,8 +590,8 @@ def predict(clf, X_test, thr):
     return y_pred
 
 def run(pdb_file_path, chain_id, num_domains=(1,99), min_seg_size=27, max_alpha_helix_size_to_contract=30,
-        max_segdom_ratio=1.5, min_domain_size=27, kernel='lap-exp-diff', dispall=False,
-        bw_a=None, bw_b=None, dssp_path='/usr/bin/dssp', clustering_method='spectral'):
+        max_segdom_ratio=1.5, min_domain_size=27, kernel='LED', dispall=False,
+        bw_a=None, bw_b=None, dssp_path='/usr/bin/dssp', clustering_method='SP'):
     output = ''
 
     err = False
@@ -610,11 +610,11 @@ def run(pdb_file_path, chain_id, num_domains=(1,99), min_seg_size=27, max_alpha_
         output += f'Error: DSSP binary not found ({dssp_path})'
         err = True
 
-    if clustering_method not in {'spectral', 'kernel-kmeans'}:
+    if clustering_method not in {'SP', 'KK'}:
         output += f'Error: Invalid clustering method ({clustering_method})\n'
         err = True
 
-    if kernel not in {'lap-exp-diff', 'markov-diff', 'reg-lap-diff', 'markov-exp-diff'}:
+    if kernel not in {'LED', 'MD', 'RL', 'MED'}:
         output += f'Error: Invalid kernel: {kernel}\n'
         err = True
 
@@ -726,23 +726,23 @@ def run(pdb_file_path, chain_id, num_domains=(1,99), min_seg_size=27, max_alpha_
     # num_vtx = len(graph.vs)
 
     if bw_a == None and bw_b == None:
-        if kernel == 'lap-exp-diff':
-            if clustering_method == 'spectral':
+        if kernel == 'LED':
+            if clustering_method == 'SP':
                 bw_a = 0.005
             else:
                 bw_a = 0.006
-        elif kernel == 'markov-diff':
-            if clustering_method == 'spectral':
+        elif kernel == 'MD':
+            if clustering_method == 'SP':
                 bw_a = 0.65
             else:
                 bw_a = 0.2
-        elif kernel == 'reg-lap-diff':
-            if clustering_method == 'spectral':
+        elif kernel == 'RL':
+            if clustering_method == 'SP':
                 bw_a = 0.021
             else:
                 bw_a = 0.021
-        elif kernel == 'markov-exp-diff':
-            if clustering_method == 'spectral':
+        elif kernel == 'MED':
+            if clustering_method == 'SP':
                 bw_a = 0.45
             else:
                 bw_a = 0.45
