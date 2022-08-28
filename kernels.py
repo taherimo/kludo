@@ -1,6 +1,10 @@
 import numpy as np
 from scipy.linalg import expm
 import math
+import multiprocessing as mp
+from itertools import repeat
+
+n_cores = mp.cpu_count()
 
 def reg_lap_kernel(graph, alpha): # aka normalized random walk with restart kernel
 
@@ -15,35 +19,40 @@ def reg_lap_kernel(graph, alpha): # aka normalized random walk with restart kern
 
 def markov_exp_diff_kernel(graph, beta):
 
-    num_vtx = len(graph.vs)
+    # num_vtx = len(graph.vs)
+    #
+    # adj_matrix = np.array(graph.get_adjacency(attribute='weight').data)
+    # deg_matrix = np.diag(graph.strength(weights='weight'))
+    # m_matrix = (deg_matrix - adj_matrix - num_vtx * np.identity(np.shape(adj_matrix)[0]))/num_vtx
 
-    adj_matrix = np.array(graph.get_adjacency(attribute='weight').data)
-    deg_matrix = np.diag(graph.strength(weights='weight'))
-    m_matrix = (deg_matrix - adj_matrix - num_vtx * np.identity(np.shape(adj_matrix)[0]))/num_vtx
+    # norm_factor = graph.maxdegree() + 1
+    norm_factor = max(graph.strength(weights='weight')) + 1
+
+    lap_matrix = graph.laplacian(weights='weight')
+    m_matrix = (lap_matrix - norm_factor * np.identity(np.shape(lap_matrix)[0])) / norm_factor
 
     kernel = expm(-1 * beta * m_matrix)
-
 
     return kernel
 
 def markov_diff_kernel(graph, t):
 
     adj_matrix = np.array(graph.get_adjacency(attribute='weight').data)
-    deg_matrix = np.diag(graph.strength(weights='weight'))
-    p_matrix = np.zeros(shape=(np.shape(adj_matrix)[0],np.shape(adj_matrix)[1]))
+    deg_matrix = np.diag(np.array(graph.strength(weights='weight'))+0.00001)
+    p_matrix = np.matmul(np.linalg.inv(deg_matrix), adj_matrix)
 
-    for i in range (np.shape(adj_matrix)[0]):
-        for j in range (np.shape(adj_matrix)[1]):
-            if deg_matrix[i,i] > 0:
-                p_matrix[i,j]= adj_matrix[i,j] / deg_matrix[i,i]
-            elif deg_matrix[i,i] == 0:
-                p_matrix[i, j] = adj_matrix[i, j] / 0.00001
+    p_matrix_power = p_matrix.copy()
+    z_matrix = p_matrix.copy()
 
-    z_matrix = np.zeros(shape=(np.shape(adj_matrix)[0],np.shape(adj_matrix)[0]))
+    for tau in range(2, int(t + 1), 1):
+        p_matrix_power = np.dot(p_matrix_power, p_matrix)
+        z_matrix += p_matrix_power
 
-    for tau in np.arange(1, int(t + 1), step=1):
-        z_matrix = z_matrix + np.linalg.matrix_power(p_matrix, tau)
     z_matrix = z_matrix / t
+
+    # pool = mp.Pool(n_cores)
+    # out = pool.starmap(np.linalg.matrix_power, zip(repeat(p_matrix),list(np.arange(1, int(t + 1), step=1))))
+    # z_matrix = np.sum(out, axis=0) / t
 
     kernel = np.matmul(z_matrix, z_matrix.transpose())
 
@@ -52,16 +61,38 @@ def markov_diff_kernel(graph, t):
 
 def lap_exp_diff_kernel(graph, beta):
 
-    adj_matrix = np.array(graph.get_adjacency(attribute='weight').data)
-    deg_matrix = np.diag(graph.strength(weights='weight'))
-    lap_matrix = deg_matrix - adj_matrix
+    lap_matrix = np.array(graph.laplacian(weights='weight'))
+
+    # adj_matrix = np.array(graph.get_adjacency(attribute='weight').data)
+    # deg_matrix = np.diag(graph.strength(weights='weight'))
+    # lap_matrix = deg_matrix - adj_matrix
 
     kernel = expm(-1 * beta * lap_matrix)
 
     return kernel
 
 
-def convert_kernel_to_distance(kernel_matrix, method):
+# def exp_diff_kernel(graph, alpha):
+#     adj_matrix = np.array(graph.get_adjacency(attribute='weight').data)
+#     kernel = expm(alpha * adj_matrix)
+#     return kernel
+
+
+def calc_kernel(graph, type, bw):
+    kernel_matrix = None
+    if type == 'lap-exp-diff':
+        kernel_matrix = lap_exp_diff_kernel(graph, bw)
+    elif type == 'markov-diff':
+        kernel_matrix = markov_diff_kernel(graph, bw)
+    elif type == 'reg-lap-diff':
+        kernel_matrix = reg_lap_kernel(graph, bw)
+    elif type == 'markov-exp-diff':
+        kernel_matrix = markov_exp_diff_kernel(graph, bw)
+    return kernel_matrix
+
+
+
+def convert_kernel_to_distance(kernel_matrix, method='norm'):
     n = kernel_matrix.shape[0]
     distance_matrix = np.zeros((n, n))
 

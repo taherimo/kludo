@@ -1,9 +1,19 @@
 import atomium
 import numpy as np
+from igraph import Graph
+from sklearn.metrics import pairwise_distances
+import scipy.ndimage.measurements as ms
 
-def parse_pdb(pdb_file_path, pdbid, chainid):
+# import locale
+#
+# locale.setlocale(locale.LC_ALL, "")
+
+
+def parse_pdb(pdb_file_path, chainid):
 
     chain = atomium.open(pdb_file_path).model.chain(chainid)
+
+    atoms = sorted(list(chain.atoms()), key=lambda x: x.id)
 
     if chain is None:
         return 'invalid chain'
@@ -14,6 +24,10 @@ def parse_pdb(pdb_file_path, pdbid, chainid):
     aminoacid_ca_coords = []
 
     for res in chain.residues():
+
+        # is_het = np.any([atm._is_hetatm for atm in res.atoms()])
+
+        # if not is_het:
         aminoacids.append(res)
         aminoacid_resnums.append(res.id.split('.')[1])
         aminoacid_letters.append(res.code)
@@ -24,7 +38,7 @@ def parse_pdb(pdb_file_path, pdbid, chainid):
             aminoacid_ca_coords.append(np.mean(list(atom_locs.values()),axis=0))
 
 
-    return aminoacids, aminoacid_ca_coords, aminoacid_letters, aminoacid_resnums
+    return aminoacids, atoms, aminoacid_ca_coords, aminoacid_letters, aminoacid_resnums, chain.radius_of_gyration
 
 def parse_dssp(input_handle, qchainid):
     # import pandas as pd
@@ -230,3 +244,49 @@ def extract_hydrpgen_bonds(dssp, aminoacid_resnums, energy_cutoff):
 
 
     return hbonds_nho, hbonds_ohn
+
+
+def make_graph(atoms):
+
+    atom_locs = [atm.location for atm in atoms]
+    atom_resnums = np.array([atm.het.id.split('.')[1] for atm in atoms])
+    atom_atom_dist = pairwise_distances(atom_locs, n_jobs = -1)
+    atom_atom_cont = (atom_atom_dist <= 4).astype(int) - np.identity(atom_atom_dist.shape[0])
+    # atoms_ca_mask = [atm.name=='CA' for atm in atoms]
+
+    # resnums = sorted(list(set(atom_resnums)))
+    used = []
+    resnums = [x for x in atom_resnums if x not in used and (used.append(x) or True)]
+    del used
+
+    res_bounds_mask = atom_resnums[1:] != atom_resnums[0:-1]
+    res_bounds_mask = np.insert(res_bounds_mask, 0, True)
+    res_bounds_idx = np.where(res_bounds_mask)[0]
+
+    g = Graph()
+    for i in range(0, len(resnums)):
+        g.add_vertex(i)
+
+    # resnums = groupby(atom_resnums)
+    # if len(resnums) != len(chain.residues()):
+    #     print('oooops')
+    # for k, g in resnums:
+    #     print(k,g)
+
+    atom_atom_cont = np.triu(atom_atom_cont, 1)
+    res_res_cont = np.add.reduceat(np.add.reduceat(atom_atom_cont, res_bounds_idx, axis=0), res_bounds_idx, axis=1)
+    res_res_cont= np.triu(res_res_cont, 1)
+
+    nonzero_idx = np.nonzero(res_res_cont)
+
+    for i in range(len(nonzero_idx[0])):
+        g.add_edge(nonzero_idx[0][i], nonzero_idx[1][i], weight=res_res_cont[nonzero_idx[0][i],nonzero_idx[1][i]])
+
+    # for i in range(res_res_cont.shape[0]-1):
+    #     for j in range(i + 1, res_res_cont.shape[1]):
+    #         if res_res_cont[i,j]>0:
+    #             g.add_edge(i, j, weight=res_res_cont[i,j])
+
+    # g['maxstrength'] = len(atoms)
+
+    return g

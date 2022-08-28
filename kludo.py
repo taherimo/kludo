@@ -4,14 +4,20 @@ from collections import defaultdict
 from operator import itemgetter
 from igraph import Graph
 from prettytable import PrettyTable, ALL
-from sklearn.cluster import DBSCAN
 from sklearn.cluster import SpectralClustering
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from kernels import *
 from protein_structure import *
-from single_multi_classifier import SingleMultiClassifier
 from tslearn.clustering import KernelKMeans
+# import multiprocessing as mp
+import re
+from sklearn.preprocessing import scale
+import unidip.dip as dip
+from pyclustertend import hopkins
+from sklearn.decomposition import KernelPCA
+import bz2
+import _pickle as cPickle
 
 here = os.path.dirname(__file__)
 
@@ -77,58 +83,111 @@ hydrophobicity['Y'] = -1.3
 hydrophobicity['X'] = -0.5
 hydrophobicity['Z'] = -3.5
 
+min_hydrophobicity = min(hydrophobicity.values())
+max_hydrophobicity = max(hydrophobicity.values())
 
-def make_graph(aminoacids, aminoacid_ca_coords, co_alpha_helix_matrix, co_beta_strand_matrix, betasheet_labels, acc,
-               hydphob, hydrogen_bonds, beta_bridges):
-    loaded_model = pickle.load(open(os.path.join(here, 'edge_weight_predictor.sav'), 'rb'))
+rel_hydrophobicity = {aa: (hydrophobicity[aa] - min_hydrophobicity) / (max_hydrophobicity - min_hydrophobicity) for aa in hydrophobicity}
 
-    g = Graph()
+f = bz2.BZ2File(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sm_classifier.pkl.bz2'), 'rb')
+clf = cPickle.load(f)
+f.close()
 
-    for i in range(0, len(aminoacids)):
-        g.add_vertex(i)
+def _gcm_(cdf, idxs):
+    work_cdf = cdf
+    work_idxs = idxs
+    gcm = [work_cdf[0]]
+    touchpoints = [0]
+    while len(work_cdf) > 1:
+        distances = work_idxs[1:] - work_idxs[0]
+        slopes = (work_cdf[1:] - work_cdf[0]) / distances
+        minslope = slopes.min()
+        minslope_idx = np.where(slopes == minslope)[0][0] + 1
+        gcm.extend(work_cdf[0] + distances[:minslope_idx] * minslope)
+        touchpoints.append(touchpoints[-1] + minslope_idx)
+        work_cdf = work_cdf[minslope_idx:]
+        work_idxs = work_idxs[minslope_idx:]
+    return np.array(np.array(gcm)), np.array(touchpoints)
 
-    for i in range(0, len(aminoacids) - 1):
-
-        for j in range(i + 1, len(aminoacids)):
-
-            ca_dist = np.linalg.norm(np.subtract(aminoacid_ca_coords[i], aminoacid_ca_coords[j]))
-            if ca_dist <= 15:
-                # g.add_edge(i, j, weight=gamma * co_beta_strand_matrix[i,j] + 1)
-
-                num_all_contacts = 0
-                num_bb_contacts = 0
-                for atom1 in aminoacids[i].atoms():
-                    if not atom1.is_side_chain:
-                        for atom2 in aminoacids[j].atoms():
-                            dist = np.linalg.norm(np.subtract(atom1.location, atom2.location))
-                            if dist <= 4:
-                                num_all_contacts += 1
-                                if not atom2.is_side_chain:
-                                    num_bb_contacts += 1
-                    else:
-                        for atom2 in aminoacids[j].atoms():
-                            dist = np.linalg.norm(np.subtract(atom1.location, atom2.location))
-                            if dist <= 4:
-                                num_all_contacts += 1
-
-                if num_all_contacts > 0:
-                    mean_relacc = (acc[i] + acc[j]) / 2
-                    mean_hphob = (hydphob[i] + hydphob[j]) / 2
-                    in_same_betasheet = 0
-                    if betasheet_labels[i] == betasheet_labels[j] != '-':
-                        in_same_betasheet = 1
-                    beta_bridge_in_same_beta_sheet = 0
-                    if beta_bridges[i, j] != 0 and in_same_betasheet == 1:
-                        beta_bridge_in_same_beta_sheet = 1
-
-                    result = loaded_model.predict_proba(np.array(
-                        [num_bb_contacts, num_all_contacts, co_beta_strand_matrix[i, j], co_alpha_helix_matrix[i, j],
-                         hydrogen_bonds[i, j], beta_bridges[i, j], in_same_betasheet, beta_bridge_in_same_beta_sheet,
-                         mean_relacc, mean_hphob, j - i, ca_dist]).reshape(1, -1))[0]
-
-                    g.add_edge(i, j, weight=result[1])
-
-    return g
+# def _lcm_(cdf, idxs):
+#     g, t = _gcm_(1-cdf[::-1], idxs.max() - idxs[::-1])
+#     return 1-g[::-1], len(cdf) - 1 - t[::-1]
+#
+# def _touch_diffs_(part1, part2, touchpoints):
+#     diff = np.abs((part2[touchpoints] - part1[touchpoints]))
+#     return diff.max(), diff
+#
+#
+# def dip_fn(dat, is_hist=False, just_dip=False):
+#     """
+#         Compute the Hartigans' dip statistic either for a histogram of
+#         samples (with equidistant bins) or for a set of samples.
+#     """
+#     if is_hist:
+#         histogram = dat
+#         idxs = np.arange(len(histogram))
+#     else:
+#         counts = collections.Counter(dat)
+#         idxs = np.msort(list(counts.keys()))
+#         histogram = np.array([counts[i] for i in idxs])
+#
+#     # check for case 1<N<4 or all identical values
+#     if len(idxs) <= 4 or idxs[0] == idxs[-1]:
+#         left = []
+#         right = [1]
+#         d = 0.0
+#         return d if just_dip else (d, (None, idxs, left, None, right, None))
+#
+#     cdf = np.cumsum(histogram, dtype=float)
+#     cdf /= cdf[-1]
+#
+#     work_idxs = idxs
+#     work_histogram = np.asarray(histogram, dtype=float) / np.sum(histogram)
+#     work_cdf = cdf
+#
+#     D = 0
+#     left = [0]
+#     right = [1]
+#
+#     while True:
+#         left_part, left_touchpoints = _gcm_(work_cdf-work_histogram, work_idxs)
+#         right_part, right_touchpoints = _lcm_(work_cdf, work_idxs)
+#
+#         d_left, left_diffs = _touch_diffs_(left_part,
+#                                            right_part, left_touchpoints)
+#         d_right, right_diffs = _touch_diffs_(left_part,
+#                                              right_part, right_touchpoints)
+#
+#         if d_right > d_left:
+#             xr = right_touchpoints[d_right == right_diffs][-1]
+#             xl = left_touchpoints[left_touchpoints <= xr][-1]
+#             d = d_right
+#         else:
+#             xl = left_touchpoints[d_left == left_diffs][0]
+#             xr = right_touchpoints[right_touchpoints >= xl][0]
+#             d = d_left
+#
+#         left_diff = np.abs(left_part[:xl+1] - work_cdf[:xl+1]).max()
+#         right_diff = np.abs(right_part[xr:]
+#                             - work_cdf[xr:]
+#                             + work_histogram[xr:]).max()
+#
+#         if d <= D or xr == 0 or xl == len(work_cdf):
+#             the_dip = max(np.abs(cdf[:len(left)] - left).max(),
+#                           np.abs(cdf[-len(right)-1:-1] - right).max())
+#             if just_dip:
+#                 return the_dip/2
+#             else:
+#                 return the_dip/2, (cdf, idxs, left, left_part, right, right_part)
+#         else:
+#             D = max(D, left_diff, right_diff)
+#
+#         work_cdf = work_cdf[xl:xr+1]
+#         work_idxs = work_idxs[xl:xr+1]
+#         work_histogram = work_histogram[xl:xr+1]
+#
+#         left[len(left):] = left_part[1:xl+1]
+#         right[:0] = right_part[xr:-1]
+#
 
 
 def get_segments(assignment, query=None):
@@ -302,7 +361,7 @@ def remove_short_segments(assignment, cutoff, distance_matrix=None):
             shortest_segment_length = cutoff + 1000
 
 
-def remove_redundant_segments(labels, num_domains, seg_numdomians_ratio, distance_matrix):
+def remove_redundant_segments(labels, num_domains, max_segdom_ratio, distance_matrix):
     segments, segment_labels = get_segments(labels)
     shortest_segment_index = get_shortest_segment_index(segments, segment_labels)
     if shortest_segment_index != None:
@@ -310,7 +369,7 @@ def remove_redundant_segments(labels, num_domains, seg_numdomians_ratio, distanc
     else:
         return None
 
-    while len(segments) / float(num_domains) > seg_numdomians_ratio:
+    while len(segments) / float(num_domains) > max_segdom_ratio:
         remove_short_segments(labels, shortest_segment[1] - shortest_segment[0] + 2, distance_matrix)
         segments, segment_labels = get_segments(labels)
         shortest_segment_index = get_shortest_segment_index(segments, segment_labels)
@@ -331,44 +390,98 @@ def get_small_segments_idx(segments, min_seg_size):
     return small_segments_idx
 
 
-def cluster(num_domains, diff_kernel, min_seg_size, seg_numdomians_ratio, distance_matrix, min_domain_size,
-            clustering_method, alpha_helices, max_alpha_helix_size_to_merge):
-    try:
+def w_sil_score(dist_matrix, cluster_labels, weights):
 
-        if clustering_method == 'spectral':
-            clustering = SpectralClustering(n_clusters=num_domains, assign_labels="kmeans", random_state=0,
-                                            affinity='precomputed', n_init=100).fit(diff_kernel)
-        elif clustering_method == 'kernel-kmeans':
-            clustering = KernelKMeans(n_clusters=num_domains, random_state=0, n_init=100, kernel='precomputed').fit(
-                diff_kernel)
+    a = np.ones(len(cluster_labels)) * float('inf')
+    b = np.ones(len(cluster_labels)) * float('inf')
 
-        labels = clustering.labels_.copy()
+    for label in set(cluster_labels):
+        indexes_in = np.where(cluster_labels == label)[0]
+        d = dist_matrix[indexes_in,:][:,indexes_in]
+        w = weights[indexes_in]
+        for i in range(d.shape[0]):
+            d_i = np.delete(d[i,:], i)
+            w_i = np.delete(w, i)
+            a_i = np.average(d_i, weights= w_i)
+            a[indexes_in[i]] = a_i
 
-        for alpha_helix in alpha_helices:
-            if alpha_helix[1] - alpha_helix[0] + 1 <= max_alpha_helix_size_to_merge:
-                alpha_helix_labels = labels[alpha_helix[0]:alpha_helix[1] + 1]
-                counter = collections.Counter(alpha_helix_labels)
-                if len(counter) > 1:
-                    most_common = counter.most_common(1)[0][0]
-                    labels[alpha_helix[0]:alpha_helix[1] + 1] = [most_common] * (alpha_helix[1] - alpha_helix[0] + 1)
+        indexes_out = np.where(cluster_labels != label)[0]
+        d_out = dist_matrix[indexes_out, :][:, indexes_in]
+        for i in range(d_out.shape[0]):
+            d_i = d_out[i,:]
+            b_i = np.average(d_i, weights=w)
+            b[indexes_out[i]] = min(b[indexes_out[i]], b_i)
 
-        remove_short_segments(labels, min_seg_size, distance_matrix)
+    sil = (b - a) /  np.vstack([a, b]).max(axis=0)
 
-        remove_redundant_segments(labels, num_domains, seg_numdomians_ratio, distance_matrix)
+    return sil.mean()
 
-        if (len(set(labels)) < num_domains):
+def cluster(num_domains, diff_kernel, min_seg_size, max_segdom_ratio, distance_matrix, min_domain_size,
+            clustering_method, alpha_helices, max_alpha_helix_size_to_merge, hydphob):
+    # try:
+
+    if clustering_method == 'spectral':
+        no_err = False
+        random_state = 0
+        while not no_err:
+            try:
+                clustering = SpectralClustering(n_clusters=num_domains, assign_labels="kmeans", random_state=random_state,
+                                                affinity='precomputed', n_init=100).fit(diff_kernel)
+                no_err = True
+                # print('ok')
+            except:
+                # print('error')
+                random_state += 1
+                # pass
+
+    elif clustering_method == 'kernel-kmeans':
+        no_err = False
+        random_state = 0
+        while not no_err:
+            try:
+                clustering = KernelKMeans(n_clusters=num_domains, random_state=random_state, n_init=100, kernel='precomputed').fit(
+                    diff_kernel)
+
+                no_err = True
+            except:
+                random_state += 1
+                # pass
+
+
+    labels = clustering.labels_.copy()
+
+    for alpha_helix in alpha_helices:
+        if alpha_helix[1] - alpha_helix[0] + 1 <= max_alpha_helix_size_to_merge:
+            alpha_helix_labels = labels[alpha_helix[0]:alpha_helix[1] + 1]
+            counter = collections.Counter(alpha_helix_labels)
+            if len(counter) > 1:
+                most_common = counter.most_common(1)[0][0]
+                labels[alpha_helix[0]:alpha_helix[1] + 1] = [most_common] * (alpha_helix[1] - alpha_helix[0] + 1)
+
+    remove_short_segments(labels, min_seg_size, distance_matrix)
+
+    remove_redundant_segments(labels, num_domains, max_segdom_ratio, distance_matrix)
+
+    hydphob_res_mask = hydphob > 2
+
+    if (len(set(labels[hydphob_res_mask])) < num_domains):
+        return 'error'
+
+
+    sil_score = silhouette_score(distance_matrix[hydphob_res_mask,:][:,hydphob_res_mask], labels=labels[hydphob_res_mask], metric="precomputed")
+
+    # sil_score = np.average(silhouette_samples(distance_matrix, labels=labels, metric="precomputed"), weights=np.array(rel_hydphob)**2)
+
+    # sil_score = w_sil_score(distance_matrix, labels, (rel_hydphob * 10)**4)
+
+    for label in set(labels):
+        if np.count_nonzero(labels == label) < min_domain_size:
             return 'error'
 
-        sil_score = silhouette_score(distance_matrix, labels=labels, metric="precomputed")
+    return labels, labels, sil_score
 
-        for label in set(labels):
-            if np.count_nonzero(labels == label) < min_domain_size:
-                return 'error'
-
-        return labels, labels, sil_score
-
-    except:
-        return 'error'
+    # except:
+    #     return 'error'
 
 
 def proper_round(num, dec=0):
@@ -379,6 +492,53 @@ def proper_round(num, dec=0):
         return float(a) + b ** (-dec + 1) if a and b == 10 else float(a + str(b))
     return float(num[:-1])
 
+
+def multi_domain_assignment(min_num_doms, max_num_doms, aminoacid_resnums, hydphob, kernel_matrix, min_seg_size, max_segdom_ratio, distance_matrix,
+                         min_domain_size, clustering_method, alpha_helices, max_alpha_helix_size_to_contract):
+
+    multidomain_assignments = []
+
+    multidomain_labelings = []
+
+    opt_num_domains = m = min_num_doms
+
+    max_sil_score = -1
+
+    while m <= max_num_doms:
+
+        result = cluster(m, kernel_matrix, min_seg_size, max_segdom_ratio, distance_matrix,
+                         min_domain_size, clustering_method, alpha_helices, max_alpha_helix_size_to_contract, hydphob)
+
+        if result == 'error':
+            break
+        else:
+            labels, labels_by_vertices, sil_score = result
+            multidomain_assignments.append((m, conv_to_text(
+                get_domains_as_segments_by_resnum(get_domains_as_segments(labels), aminoacid_resnums),
+                delimiter=''), proper_round(sil_score, 5)))
+            multidomain_labelings.append(labels)
+            if sil_score > max_sil_score:
+                max_sil_score = sil_score
+                opt_num_domains = m
+            m += 1
+
+    if len(multidomain_assignments)== 0:
+        opt_num_domains = 0
+
+    return multidomain_assignments, multidomain_labelings, opt_num_domains
+
+def make_table(pdb_id, chain_id, multidomain_assignments_sorted, singledomain_assignment = None, singledomain_assignment_pos = 'top'):
+    table = PrettyTable(['Num. domains', 'Domain decomposition', 'Sil. score'])
+    table.title = f'PDB ID: {pdb_id.upper()}   Chain ID: {chain_id.upper()}'
+    if singledomain_assignment is not None and singledomain_assignment_pos=='top':
+        table.add_row(singledomain_assignment)
+    for assignment in multidomain_assignments_sorted:
+        table.add_row(assignment)
+    if singledomain_assignment is not None and singledomain_assignment_pos == 'bottom':
+        table.add_row(singledomain_assignment)
+    table.align['Domain decomposition'] = 'l'
+    table.hrules = ALL
+    return table
 
 help_text = """
 
@@ -401,8 +561,8 @@ help_text = """
   --maxsegdomratio [RATIO]   Maximum ratio of segment count to domain count
   --kernel [TYPE]            The type of graph node kernel (**)
   --dispall                  Display all candidate partitionings
-  --bw_x [VALUE]             Bandwidth parameter x (***)
-  --bw_y [VALUE]             Bandwidth parameter y (***)
+  --bw_a [VALUE]             Bandwidth parameter x (***)
+  --bw_b [VALUE]             Bandwidth parameter y (***)
  
   *
   These arguments are necessary
@@ -415,15 +575,23 @@ help_text = """
    markov-exp-diff
 
   ***
-  The parameters bw_x and bw_y are coefficient (x) and exponent (y)
+  The parameters bw_a and bw_b are coefficient (x) and exponent (y)
   of the protein size (n) respectively, which determine the bandwidth
   parameter (β or t) of each kernel. (xn^y)
 """
 
 
-def run(pdb_file_path, chain_id, num_domains=None, min_seg_size=25, max_alpha_helix_size_to_contract=30,
-        seg_numdomians_ratio=1.6, min_domain_size=27, kernel='markov-diff', display_all_partiotionings=False,
-        bw_x=None, bw_y=None, dssp_path='/usr/bin/dssp', clustering_method='spectral'):
+def predict(clf, X_test, thr):
+    y_pred = np.array(['M'] * X_test.shape[0])
+    y_pred_proba = clf.predict_proba(X_test)
+    s = y_pred_proba[:,np.where(clf.classes_== 'S')[0][0]]
+    y_pred[s > thr] = 'S'
+
+    return y_pred
+
+def run(pdb_file_path, chain_id, num_domains=(1,99), min_seg_size=27, max_alpha_helix_size_to_contract=30,
+        max_segdom_ratio=1.5, min_domain_size=27, kernel='lap-exp-diff', dispall=False,
+        bw_a=None, bw_b=None, dssp_path='/usr/bin/dssp', clustering_method='spectral'):
     output = ''
 
     err = False
@@ -433,7 +601,7 @@ def run(pdb_file_path, chain_id, num_domains=None, min_seg_size=25, max_alpha_he
         err = True
     else:
         pdb_id = ntpath.basename(pdb_file_path)[:4].upper()
-        parsed_pdb = parse_pdb(pdb_file_path, pdb_id, chain_id)
+        parsed_pdb = parse_pdb(pdb_file_path, chain_id)
         if parsed_pdb == 'invalid chain':
             output += f'Error: Chain ID is not valid ({chain_id})\n'
             err = True
@@ -450,17 +618,37 @@ def run(pdb_file_path, chain_id, num_domains=None, min_seg_size=25, max_alpha_he
         output += f'Error: Invalid kernel: {kernel}\n'
         err = True
 
-    if (bw_x == None and bw_y != None) or (bw_x != None and bw_y == None):
-        output += 'Error: The arguments --bw_x and --bw_y should be passed simultaneously\n'
+    if (bw_a == None and bw_b != None) or (bw_a != None and bw_b == None):
+        output += 'Error: The arguments --bw_a and --bw_b should be passed simultaneously\n'
+        err = True
+
+    if type(num_domains) is tuple:
+        if len(num_domains) == 2:
+            if num_domains[0]>=num_domains[1]:
+                output += 'Error: wrong range for --numdomains\n'
+                err = True
+            if num_domains[0]>99 or num_domains[1]>99:
+                output += 'Error: --numdomains out of possible range\n'
+            if num_domains[0] < 1 or num_domains[1] < 1:
+                output += 'Error: --numdomains out of possible range\n'
+        else:
+            output += 'Error: wrong range for --numdomains\n'
+            err = True
+    elif type(num_domains) is int:
+        if num_domains>99 or num_domains <1:
+            output += 'Error: wrong value for --numdomains\n'
+            err = True
+    else:
+        output += 'Error: wrong input type for --numdomains\n'
         err = True
 
     if err:
         return output
 
-    aminoacids, aminoacid_ca_coords, aminoacid_letters, aminoacid_resnums = parsed_pdb
+    aminoacids, atoms, aminoacid_ca_coords, aminoacid_letters, aminoacid_resnums, radius_of_gyration = parsed_pdb
 
     if len(aminoacids) == 0:
-        print(pdb_id + '\t' + chain_id + '\t1')
+        # print(pdb_id + '\t' + chain_id + '\t1')
         return pdb_id + '\t' + chain_id + '\t1'
         # quit(0)
 
@@ -472,15 +660,15 @@ def run(pdb_file_path, chain_id, num_domains=None, min_seg_size=25, max_alpha_he
     # dssp2 = DSSP(model, pdb_path, dssp=r'd:/dssp-2.0.4-win32.exe')
     retval = p.wait()
 
-    hbonds_nho, hbonds_ohn = extract_hydrpgen_bonds(dssp, aminoacid_resnums, -0.6)
-    hydrogen_bonds = hbonds_nho + hbonds_ohn
-
-    for i in range(n - 1):
-        for j in range(i + 1, n):
-            if (hydrogen_bonds[i, j] != hydrogen_bonds[j, i]):
-                hydrogen_bonds[i, j] = hydrogen_bonds[j, i] = max(hydrogen_bonds[i, j], hydrogen_bonds[j, i])
-
-    beta_bridges = get_beta_bridges(dssp, aminoacid_resnums)
+    # hbonds_nho, hbonds_ohn = extract_hydrpgen_bonds(dssp, aminoacid_resnums, -0.6)
+    # hydrogen_bonds = hbonds_nho + hbonds_ohn
+    #
+    # for i in range(n - 1):
+    #     for j in range(i + 1, n):
+    #         if (hydrogen_bonds[i, j] != hydrogen_bonds[j, i]):
+    #             hydrogen_bonds[i, j] = hydrogen_bonds[j, i] = max(hydrogen_bonds[i, j], hydrogen_bonds[j, i])
+    #
+    # beta_bridges = get_beta_bridges(dssp, aminoacid_resnums)
 
     # Maximum accessible surface area by Miller et al. 1987
 
@@ -527,141 +715,428 @@ def run(pdb_file_path, chain_id, num_domains=None, min_seg_size=25, max_alpha_he
             for j in range(i + 1, beta_strand[1] + 1):
                 co_beta_strand_matrix[i, j] = co_beta_strand_matrix[j, i] = 1
 
-    hydphob = [hydrophobicity[aminoacid_letters[i]] for i in range(n)]
+    hydphob = np.array([hydrophobicity[aminoacid_letters[i]] for i in range(n)])
+    rel_hydphob = np.array([rel_hydrophobicity[aminoacid_letters[i]] for i in  range(n)])
 
-    graph = make_graph(aminoacids, aminoacid_ca_coords, co_alpha_helix_matrix, co_beta_strand_matrix, betasheet_labels,
-                       acc, hydphob, hydrogen_bonds, beta_bridges)
+    # graph = make_graph_serial(aminoacids, aminoacid_ca_coords, co_alpha_helix_matrix, co_beta_strand_matrix, betasheet_labels,
+    #                    acc, hydphob, hydrogen_bonds, beta_bridges)
 
-    num_vtx = len(graph.vs)
+    graph = make_graph(atoms)
 
-    if bw_x == None and bw_y == None:
+    # num_vtx = len(graph.vs)
+
+    if bw_a == None and bw_b == None:
         if kernel == 'lap-exp-diff':
             if clustering_method == 'spectral':
-                bw_x = 0.1105
+                bw_a = 0.005
             else:
-                bw_x = 0.112
+                bw_a = 0.006
         elif kernel == 'markov-diff':
             if clustering_method == 'spectral':
-                bw_x = 0.4024
+                bw_a = 0.65
             else:
-                bw_x = 0.409
+                bw_a = 0.2
         elif kernel == 'reg-lap-diff':
             if clustering_method == 'spectral':
-                bw_x = 0.035
+                bw_a = 0.021
             else:
-                bw_x = 0.059
+                bw_a = 0.021
         elif kernel == 'markov-exp-diff':
             if clustering_method == 'spectral':
-                bw_x = 0.61
+                bw_a = 0.45
             else:
-                bw_x = 0.66
+                bw_a = 0.45
 
-        bw_y = 1
+        bw_b = 2
 
-    bw = bw_x * (num_vtx ** bw_y)
 
-    if kernel == 'lap-exp-diff':
-        kernel_matrix = lap_exp_diff_kernel(graph, bw)
-    elif kernel == 'markov-diff':
-        kernel_matrix = markov_diff_kernel(graph, bw)
-    elif kernel == 'reg-lap-diff':
-        kernel_matrix = reg_lap_kernel(graph, bw)
-    elif kernel == 'markov-exp-diff':
-        kernel_matrix = markov_exp_diff_kernel(graph, bw)
 
-    if np.isinf(kernel_matrix).any():
-        output += "Error: Too large diffusion parameter\n"
-        err = True
+
+    if type(num_domains) is tuple:
+
+        if num_domains[0] == 1:
+
+            singledomain_labeling = [0] * n
+            singledomain_result = conv_to_text(get_domains_as_segments_by_resnum(get_domains_as_segments(singledomain_labeling), aminoacid_resnums))
+            singledomain_assignment = (1, singledomain_result , '----')
+
+
+            feature_vec = extract_features(aminoacids, aminoacid_ca_coords, radius_of_gyration, n,graph, hydphob,rel_hydphob, acc)
+
+            if len(feature_vec) != 78:
+                return 'Error: issue in feature extraction'
+
+
+
+            # f = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sm_classifier_zandieh.pkl'), 'rb')
+            # clf = pickle.load(f)
+            # f.close()
+
+            predicted_as_singledomain = clf.predict([feature_vec])[0] == 'S'
+            # predicted_as_singledomain = (clf.predict_proba([feature_vec])[0][1]>0.55).astype(bool)
+
+            # dm_hydph = distance_matrix[hydphob>2,:][:,hydphob>2]
+
+            # dm_hydph_triu = dm_hydph[np.triu_indices(dm_hydph.shape[0], k=1)]
+            #
+
+            # diptst_stat, diptst_pval, _ = dip.diptst(np.histogram(pc.ravel()[hydphob > 2], density=True, bins=10)[0], is_hist=True)
+            # diptst_stat, diptst_pval, _ = dip.diptst(np.histogram(distance_matrix_triu, density=True, bins=10)[0], is_hist=True)
+
+            # predicted_as_singledomain = diptst_pval > 0.5
+
+
+
+            # predicted_as_singledomain = predict(clf,np.array([feature_vec]),0.7)[0] == 'S'
+
+            if predicted_as_singledomain:
+
+
+
+                if dispall:
+                    # kernel_matrix = calc_kernel(graph, bw, kernel)
+
+                    # bw = bw_a * (num_vtx ** bw_b)
+                    bw = bw_a * (radius_of_gyration ** bw_b)
+
+                    kernel_matrix = calc_kernel(graph, kernel, bw)
+
+                    if np.isinf(kernel_matrix).any() or np.isnan(kernel_matrix).any():
+                        output += "Error: Too large bandwidth parameter\n"
+                        err = True
+
+                    if err:
+                        return output
+
+                    distance_matrix = convert_kernel_to_distance(kernel_matrix, method='norm')
+
+                    params = dict()
+                    params['kernel_matrix'] = kernel_matrix
+                    params['min_seg_size'] = min_seg_size
+                    params['max_segdom_ratio'] = max_segdom_ratio
+                    params['distance_matrix'] = distance_matrix
+                    params['min_domain_size'] = min_domain_size
+                    params['clustering_method'] = clustering_method
+                    params['alpha_helices'] = alpha_helices
+                    params['max_alpha_helix_size_to_contract'] = max_alpha_helix_size_to_contract
+
+                    multidomain_assignments, multidomain_labelings, opt_num_domains = multi_domain_assignment(num_domains[0] + 1, num_domains[1], aminoacid_resnums, hydphob, **params)
+                    multidomain_assignments_sorted = sorted(multidomain_assignments, key=itemgetter(2), reverse=True)
+                    # multidomain_assignments.insert()
+                    output = make_table(pdb_id, chain_id, multidomain_assignments_sorted, singledomain_assignment, 'top')
+                    return output
+
+                else:
+                    output =f'{pdb_id}\t{chain_id}\t1\t{singledomain_result}'
+                    return output
+            else:
+                try:
+                    # kernel_matrix = calc_kernel(graph, bw, kernel)
+
+                    # bw = bw_a * (num_vtx ** bw_b)
+                    bw = bw_a * (radius_of_gyration ** bw_b)
+
+                    kernel_matrix = calc_kernel(graph, kernel, bw)
+
+                    if np.isinf(kernel_matrix).any() or np.isnan(kernel_matrix).any():
+                        output += "Error: Too large bandwidth parameter\n"
+                        err = True
+
+                    if err:
+                        return output
+
+                    distance_matrix = convert_kernel_to_distance(kernel_matrix, method='norm')
+
+                    params = dict()
+                    params['kernel_matrix'] = kernel_matrix
+                    params['min_seg_size'] = min_seg_size
+                    params['max_segdom_ratio'] = max_segdom_ratio
+                    params['distance_matrix'] = distance_matrix
+                    params['min_domain_size'] = min_domain_size
+                    params['clustering_method'] = clustering_method
+                    params['alpha_helices'] = alpha_helices
+                    params['max_alpha_helix_size_to_contract'] = max_alpha_helix_size_to_contract
+                    multidomain_assignments, multidomain_labelings, opt_num_domains = multi_domain_assignment(num_domains[0] + 1, num_domains[1], aminoacid_resnums, hydphob, **params)
+                    multidomain_assignments_sorted = sorted(multidomain_assignments, key=itemgetter(2), reverse=True)
+
+                    if dispall:
+                        output = make_table(pdb_id, chain_id, multidomain_assignments_sorted, singledomain_assignment, 'bottom')
+                        return output
+                    else:
+                        if len(multidomain_assignments) > 0:
+                            multidomain_result = conv_to_text(get_domains_as_segments_by_resnum(get_domains_as_segments(multidomain_labelings[opt_num_domains - 2]), aminoacid_resnums))
+                            output = f'{pdb_id}\t{chain_id}\t{opt_num_domains}\t{multidomain_result}'
+                            return output
+                        else: # reject
+                            output = f'{pdb_id}\t{chain_id}\t1\t{singledomain_result}'
+                            return output
+                except:
+                    print('error', pdb_id, chain_id)
+
+        else: # numdomains --> [2, infinity]
+            # kernel_matrix = calc_kernel(graph, bw, kernel)
+
+            # bw = bw_a * (num_vtx ** bw_b)
+            bw = bw_a * (radius_of_gyration ** bw_b)
+
+            kernel_matrix = calc_kernel(graph, kernel, bw)
+
+            if np.isinf(kernel_matrix).any() or np.isnan(kernel_matrix).any():
+                output += "Error: Too large bandwidth parameter\n"
+                err = True
+
+            if err:
+                return output
+
+            distance_matrix = convert_kernel_to_distance(kernel_matrix, method='norm')
+
+            params = dict()
+            params['kernel_matrix'] = kernel_matrix
+            params['min_seg_size'] = min_seg_size
+            params['max_segdom_ratio'] = max_segdom_ratio
+            params['distance_matrix'] = distance_matrix
+            params['min_domain_size'] = min_domain_size
+            params['clustering_method'] = clustering_method
+            params['alpha_helices'] = alpha_helices
+            params['max_alpha_helix_size_to_contract'] = max_alpha_helix_size_to_contract
+
+            multidomain_assignments, multidomain_labelings, opt_num_domains = multi_domain_assignment(num_domains[0], num_domains[1], aminoacid_resnums, hydphob, **params)
+
+            if len(multidomain_assignments) == 0:
+                output += 'Error: It is impossible to decompose the protein chain by the given parameter values\n'
+                err = True
+            else:
+
+                if dispall:
+                    multidomain_assignments_sorted = sorted(multidomain_assignments, key=itemgetter(2), reverse=True)
+                    output = make_table(pdb_id, chain_id, multidomain_assignments_sorted)
+                    return output
+                else:
+                    multidomain_result = conv_to_text(get_domains_as_segments_by_resnum(get_domains_as_segments(multidomain_labelings[opt_num_domains - 2]), aminoacid_resnums))
+                    output = f'{pdb_id}\t{chain_id}\t{multidomain_assignments[opt_num_domains - 2][0]}\t{multidomain_result}'
+                    return output
+
+
+    else:
+        if num_domains==1:
+            singledomain_labeling = [0] * n
+            singledomain_result = conv_to_text(get_domains_as_segments_by_resnum(get_domains_as_segments(singledomain_labeling), aminoacid_resnums))
+            output = f'{pdb_id}\t{chain_id}\t1\t{singledomain_result}'
+
+            return output
+
+        else:
+            # kernel_matrix = calc_kernel(graph, bw, kernel)
+
+            # bw = bw_a * (num_vtx ** bw_b)
+            bw = bw_a * (radius_of_gyration ** bw_b)
+
+            kernel_matrix = calc_kernel(graph, kernel, bw)
+
+            if np.isinf(kernel_matrix).any() or np.isnan(kernel_matrix).any():
+                output += "Error: Too large bandwidth parameter\n"
+                err = True
+
+            if err:
+                return output
+
+            distance_matrix = convert_kernel_to_distance(kernel_matrix, method='norm')
+
+            params = dict()
+            params['kernel_matrix'] = kernel_matrix
+            params['min_seg_size'] = min_seg_size
+            params['max_segdom_ratio'] = max_segdom_ratio
+            params['distance_matrix'] = distance_matrix
+            params['min_domain_size'] = min_domain_size
+            params['clustering_method'] = clustering_method
+            params['alpha_helices'] = alpha_helices
+            params['max_alpha_helix_size_to_contract'] = max_alpha_helix_size_to_contract
+
+            result = cluster(num_domains, kernel_matrix, min_seg_size, max_segdom_ratio, distance_matrix,
+                             min_domain_size, clustering_method, alpha_helices, max_alpha_helix_size_to_contract, hydphob)
+            err = result == 'error'
+            if err:
+                output += 'Error: It is impossible to decompose the protein chain by the given parameter values\n'
+                err = True
+            else:
+                labels, labels_by_vertices, sil_score = result
+
+                output = pdb_id + '\t' + chain_id + '\t' + str(num_domains) + '\t' + conv_to_text(
+                    get_domains_as_segments_by_resnum(get_domains_as_segments(labels), aminoacid_resnums))
+
+                return output
 
     if err:
         return output
 
-    distance_matrix = convert_kernel_to_distance(kernel_matrix, method='norm')
 
-    if num_domains == None:
+def weighted_variance(points, w):
 
-        num_domains = 1
-        single_domain_labeling = [0] * n
+    if type(w) is not np.ndarray:
+        w = np.array(w)
 
-        labelings = [single_domain_labeling]
+    v1 = w.sum()
+    v2 = (w ** 2).sum()
 
-        all_assignments = []
+    w_var = np.dot(((points - points.mean(axis=0, keepdims= True)) ** 2).T, w) / (v1 - (v2 / v1))
 
-        all_assignments.append((1, conv_to_text(
-            get_domains_as_segments_by_resnum(get_domains_as_segments(single_domain_labeling), aminoacid_resnums),
-            delimiter=''),
-                                '----'))
+    return w_var
 
-        opt_num_domains = 1
 
-        smc = SingleMultiClassifier()
-        smc_res = smc.predict(graph, acc, hydphob, aminoacid_ca_coords, n)
 
-        if smc_res == 'M' or display_all_partiotionings:
+def extract_features(aminoacids, aminoacid_ca_coords, radius_of_gyration, n, graph, hydphob, rel_hydphob, acc):
 
-            max_sil_score = -1
 
-            while True:
-                num_domains += 1
-                result = cluster(num_domains, kernel_matrix, min_seg_size, seg_numdomians_ratio, distance_matrix,
-                                 min_domain_size, clustering_method, alpha_helices, max_alpha_helix_size_to_contract)
+    import numpy as np
 
-                if result == 'error':
-                    num_domains -= 1
-                    break
-                else:
-                    labels, labels_by_vertices, sil_score = result
-                    all_assignments.append((num_domains, conv_to_text(
-                        get_domains_as_segments_by_resnum(get_domains_as_segments(labels), aminoacid_resnums),
-                        delimiter=''), proper_round(sil_score, 5)))
-                    labelings.append(labels)
-                    if sil_score > max_sil_score:
-                        max_sil_score = sil_score
-                        opt_num_domains = num_domains
+    np.random.seed(0)
 
-        if display_all_partiotionings:
 
-            all_assignments[1:] = sorted(all_assignments[1:], key=itemgetter(2), reverse=True)
+    ca_coords_centered = scale(np.array(aminoacid_ca_coords), with_std=False)
 
-            table = PrettyTable(['Num. domains', 'Domain decomposition', 'Sil. score'])
-            table.title = f'PDB ID: {pdb_id.upper()}   Chain ID: {chain_id.upper()}'
+    pca = PCA()
 
-            if smc_res == 'S':
-                table.add_row(all_assignments[0])
+    pca.fit(ca_coords_centered)
+    pca_ca_coords_centered = pca.transform(ca_coords_centered)
+    pca_expl_var = pca.explained_variance_
 
-            for assignment in all_assignments[1:]:
-                table.add_row(assignment)
 
-            if smc_res == 'M':
-                table.add_row(all_assignments[0])
+    # hopkins_score1 = hopkins(scale(X_transformed[:,:3], with_std=False), X_transformed.shape[0])
+    # hopkins_scores = []
+    # dt_pc1_scores, dt_pc2_scores, dt_pc3_scores = [], [], []
+    # for _ in range(100):
+    #     hopkins_scores.append(hopkins(ca_coords_centered, len(aminoacids)))
+        # dt_pc1_scores.append(dip.diptst(pca_ca_coords_centered[:, 0])[1])
+        # dt_pc2_scores.append(dip.diptst(pca_ca_coords_centered[:, 1])[1])
+        # dt_pc3_scores.append(dip.diptst(pca_ca_coords_centered[:, 2])[1])
 
-            table.align['Domain decomposition'] = 'l'
-            table.hrules = ALL
+    hopkins_scores = [hopkins(ca_coords_centered, len(aminoacids)) for _ in range(100)]
 
-            output = table
+    hopkins_score = np.mean(hopkins_scores)
+    # hopkins_score_var = np.var(hopkins_scores)
 
-        else:
-            print_format = pdb_id + '\t' + chain_id + '\t' + str(opt_num_domains) + '\t' + conv_to_text(
-                get_domains_as_segments_by_resnum(get_domains_as_segments(labelings[opt_num_domains - 1]),
-                                                  aminoacid_resnums))
-            output = print_format
+    bins_pc1 = np.arange(pca_ca_coords_centered[:, 0].min(), pca_ca_coords_centered[:, 0].max() + 4, step=4)
+    bins_pc2 = np.arange(pca_ca_coords_centered[:, 1].min(), pca_ca_coords_centered[:, 1].max() + 4, step=4)
+    bins_pc3 = np.arange(pca_ca_coords_centered[:, 2].min(), pca_ca_coords_centered[:, 2].max() + 4, step=4)
 
-        return output
+    hist_pc1 = np.histogram(pca_ca_coords_centered[:, 0], bins=bins_pc1)[0] / n
+    hist_pc2 = np.histogram(pca_ca_coords_centered[:, 1], bins=bins_pc2)[0] / n
+    hist_pc3 = np.histogram(pca_ca_coords_centered[:, 2], bins=bins_pc3)[0] / n
 
-    else:
-        result = cluster(num_domains, kernel_matrix, min_seg_size, seg_numdomians_ratio, distance_matrix,
-                         min_domain_size, clustering_method, alpha_helices, max_alpha_helix_size_to_contract)
-        err = result == 'error'
-        if err:
-            output += 'Error: It is impossible to decompose the protein chain by the given parameter values\n'
-            return output
-        else:
-            labels, labels_by_vertices, sil_score = result
+    dip_stat_pc1, diptest_pval_pc1, diptest_indices_pc1 = dip.diptst(hist_pc1, is_hist=True)
+    dip_stat_pc2, diptest_pval_pc2, diptest_indices_pc2 = dip.diptst(hist_pc2, is_hist=True)
+    dip_stat_pc3, diptest_pval_pc3, diptest_indices_pc3 = dip.diptst(hist_pc3, is_hist=True)
 
-            output = pdb_id + '\t' + chain_id + '\t' + str(num_domains) + '\t' + conv_to_text(
-                get_domains_as_segments_by_resnum(get_domains_as_segments(labels), aminoacid_resnums))
+    clust_coef_g = graph.transitivity_undirected(mode="zero")
+    clust_coef_al = graph.transitivity_avglocal_undirected(mode="zero")
+    clust_coef_al_w = graph.transitivity_avglocal_undirected(mode="zero",weights="weight")
 
-            return output
+    degree = graph.degree()
+    w_degree = graph.strength(weights='weight')
+
+    degree_hydphob_corr = np.corrcoef(degree, hydphob)[0, 1]
+    w_degree_hydphob_corr = np.corrcoef(w_degree, hydphob)[0, 1]
+
+    degree_acc_corr = np.corrcoef(degree, acc)[0, 1]
+    w_degree_acc_corr = np.corrcoef(w_degree, acc)[0, 1]
+
+    # if math.isnan(degree_acc_corr):
+    #     degree_acc_corr = 0
+
+    closeness = graph.closeness()
+    w_closeness = graph.closeness(weights='weight')
+
+    closeness_hydphob_corr = np.corrcoef(closeness, hydphob)[0, 1]
+    w_closeness_hydphob_corr = np.corrcoef(w_closeness, hydphob)[0, 1]
+
+    closeness_acc_corr = np.corrcoef(closeness, acc)[0, 1]
+    w_closeness_acc_corr = np.corrcoef(w_closeness, acc)[0, 1]
+
+    # if math.isnan(closeness_acc_corr):
+    #     closeness_acc_corr = 0
+
+    betweenness = graph.betweenness()
+    w_betweenness = graph.betweenness(weights='weight')
+
+    betweenness_hydphob_corr = np.corrcoef(betweenness, hydphob)[0, 1]
+    w_betweenness_hydphob_corr = np.corrcoef(w_betweenness, hydphob)[0, 1]
+
+    betweenness_acc_corr = np.corrcoef(betweenness, acc)[0, 1]
+    w_betweenness_acc_corr = np.corrcoef(w_betweenness, acc)[0, 1]
+
+    # if math.isnan(betweenness_acc_corr):
+    #     betweenness_acc_corr = 0
+
+
+    e = len(graph.es)
+    w_e = sum(graph.es['weight'])
+
+    e_n_ratio = e / n
+    w_e_n_ratio = w_e / n
+
+
+    # w = np.ones(n)
+
+    pca_w_var_degree = weighted_variance(pca_ca_coords_centered, degree)
+    pca_w_var_w_degree = weighted_variance(pca_ca_coords_centered, w_degree)
+
+    pca_w_var_closeness = weighted_variance(pca_ca_coords_centered, closeness)
+    pca_w_var_w_closeness = weighted_variance(pca_ca_coords_centered, w_closeness)
+
+    pca_w_var_betweenness = weighted_variance(pca_ca_coords_centered, betweenness)
+    pca_w_var_w_betweenness = weighted_variance(pca_ca_coords_centered, w_betweenness)
+
+    pca_w_var_acc = weighted_variance(pca_ca_coords_centered, 1 - acc)
+    pca_w_var_hydphob = weighted_variance(pca_ca_coords_centered, rel_hydphob)
+
+    degree_mean, degree_var = np.mean(degree), np.var(degree)
+    w_degree_mean, w_degree_var = np.mean(w_degree), np.var(w_degree)
+    closeness_mean, closeness_var = np.mean(closeness), np.var(closeness)
+    w_closeness_mean, w_closeness_var = np.mean(w_closeness), np.var(w_closeness)
+    betweenness_mean, betweenness_var = np.mean(betweenness), np.var(betweenness)
+    w_betweenness_mean, w_betweenness_var = np.mean(w_betweenness), np.var(w_betweenness)
+    acc_mean, acc_var = np.mean(acc), np.var(acc)
+    hydphob_mean, hydphob_var = np.mean(hydphob), np.var(hydphob)
+
+
+    # graph.laplacian(weights='weight')
+    L = graph.laplacian(weights='weight', normalized=True)
+
+    spectrum = np.linalg.eigvals(L)
+    spectrum.sort()
+
+    f_vec1 = [n, e, w_e, e_n_ratio, w_e_n_ratio, radius_of_gyration]
+
+    f_vec2 = [dip_stat_pc1, dip_stat_pc2, dip_stat_pc3, hopkins_score, clust_coef_g, clust_coef_al, clust_coef_al_w]
+
+    f_vec3 = [pca_expl_var[0], pca_expl_var[1], pca_expl_var[2], pca_w_var_degree[0], pca_w_var_degree[1],
+              pca_w_var_degree[2], pca_w_var_w_degree[0], pca_w_var_w_degree[1], pca_w_var_w_degree[2],
+              pca_w_var_closeness[0], pca_w_var_closeness[1], pca_w_var_closeness[2], pca_w_var_w_closeness[0],
+              pca_w_var_w_closeness[1], pca_w_var_w_closeness[2], pca_w_var_betweenness[0], pca_w_var_betweenness[1],
+              pca_w_var_betweenness[2], pca_w_var_w_betweenness[0], pca_w_var_w_betweenness[1],
+              pca_w_var_w_betweenness[2],
+              pca_w_var_acc[0], pca_w_var_acc[1], pca_w_var_acc[2], pca_w_var_hydphob[0], pca_w_var_hydphob[1],
+              pca_w_var_hydphob[2]]
+
+    f_vec4 = [degree_mean, degree_var, w_degree_mean, w_degree_var, closeness_mean, closeness_var,
+              w_closeness_mean, w_closeness_var, betweenness_mean, betweenness_var, w_betweenness_mean,
+              w_betweenness_var, acc_mean, acc_var, hydphob_mean, hydphob_var]
+
+    f_vec4 = [0 if math.isnan(x) else x for x in f_vec4]
+
+    f_vec5 = [degree_hydphob_corr, w_degree_hydphob_corr, degree_acc_corr, w_degree_acc_corr,
+              closeness_hydphob_corr, w_closeness_hydphob_corr, closeness_acc_corr, w_closeness_acc_corr,
+              betweenness_hydphob_corr, w_betweenness_hydphob_corr, betweenness_acc_corr, w_betweenness_acc_corr]
+
+    f_vec5 = [0 if math.isnan(x) else x for x in f_vec5]
+
+    f_vec6 = spectrum[1:11].tolist()
+
+
+    f_vec = f_vec1 + f_vec2 + f_vec3 + f_vec4 + f_vec5 + f_vec6
+
+
+    return f_vec
 
 
 if __name__ == "__main__":
@@ -670,6 +1145,9 @@ if __name__ == "__main__":
 
     unknown_args = []
     nonnumeric_val_args = []
+
+    numdomains_format_err = False
+    numdomains_range_err= False
 
     help = False
 
@@ -683,10 +1161,33 @@ if __name__ == "__main__":
             elif sys.argv[i] == '--chainid':
                 params['chain_id'] = sys.argv[i + 1].upper()
             elif sys.argv[i] == '--numdomains':
-                try:
-                    params['num_domains'] = int(sys.argv[i + 1])
-                except:
-                    nonnumeric_val_args.append(sys.argv[i])
+                if bool(re.match("(^(([1-9][0-9]?)|())-(([1-9][0-9]?)|())$)|(^([1-9][0-9]?)$)", sys.argv[i+1])):
+                    if sys.argv[i + 1].isdigit():
+                        params['num_domains'] = int(sys.argv[i + 1])
+                    elif bool(re.match("^([1-9][0-9]?)-([1-9][0-9]?)$", sys.argv[i+1])):
+                        rng = [int(x) for x in sys.argv[i+1].split('-')]
+                        if rng[0] >= rng[1]:
+                            numdomains_range_err = True
+                        else:
+                            params['num_domains'] = (rng[0], rng[1])
+                    elif bool(re.match('^()-([1-9][0-9]?)$', sys.argv[i+1])):
+                        x = int(sys.argv[i + 1][1:])
+                        if x > 1:
+                            rng = (1, x)
+                            params['num_domains'] = (rng[0], rng[1])
+                        else:
+                            numdomains_range_err = True
+                    elif bool(re.match("^([1-9][0-9]?)-()$", sys.argv[i+1])):
+                        x = int(sys.argv[i + 1][:-1])
+                        rng = (x, 99)
+                        params['num_domains'] = (rng[0], rng[1])
+                    #else: #sys.argv[i+1]== '-':
+                else:
+                    numdomains_format_err = True
+                # try:
+                #     params['num_domains'] = sys.argv[i + 1]
+                # except:
+                #     nonnumeric_val_args.append(sys.argv[i])
             elif sys.argv[i] == '--minsegsize':
                 try:
                     params['min_seg_size'] = int(sys.argv[i + 1])
@@ -704,27 +1205,29 @@ if __name__ == "__main__":
                     nonnumeric_val_args.append(sys.argv[i])
             elif sys.argv[i] == '--maxsegdomratio':
                 try:
-                    params['seg_numdomians_ratio'] = float(sys.argv[i + 1])
+                    params['max_segdom_ratio'] = float(sys.argv[i + 1])
                 except:
                     nonnumeric_val_args.append(sys.argv[i])
             elif sys.argv[i] == '--kernel':
                 params['kernel'] = sys.argv[i + 1]
             elif sys.argv[i] == '--dispall':
-                params['display_all_partiotionings'] = True
-            elif sys.argv[i] == '--bw_x':
+                params['dispall'] = True
+            elif sys.argv[i] == '--bw_a':
                 try:
-                    params['bw_x'] = float(sys.argv[i + 1])
+                    params['bw_a'] = float(sys.argv[i + 1])
                 except:
                     nonnumeric_val_args.append(sys.argv[i])
-            elif sys.argv[i] == '--bw_y':
+            elif sys.argv[i] == '--bw_b':
                 try:
-                    params['bw_y'] = float(sys.argv[i + 1])
+                    params['bw_b'] = float(sys.argv[i + 1])
                 except:
                     nonnumeric_val_args.append(sys.argv[i])
             elif sys.argv[i] == '--dssppath':
                 params['dssp_path'] = sys.argv[i + 1]
             elif sys.argv[i] == '--clustering':
                 params['clustering_method'] = sys.argv[i + 1]
+            # elif sys.argv[i] == '--pgraph':
+            #     params['para_graph_const'] = True
             else:
                 unknown_args.append(sys.argv[i])
 
@@ -752,7 +1255,14 @@ if __name__ == "__main__":
             args = ', '.join(nonnumeric_val_args)
             print(f'Error: Non-numeric value(s) for the numeric argument(s): {args}')
 
+        if numdomains_format_err or numdomains_range_err:
+            err = True
+            print('Error: wrong input for the argument --numdomains')
+
+
         if not err:
+            #output = run(**params)
+            #print(output)
             try:
                 output = run(**params)
                 print(output)
