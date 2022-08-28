@@ -19,18 +19,18 @@ The following commands are based on Linux operating system. By using --help argu
 $ python3 kludo.py --help
 ```
 The arguments are as follows:
-*  --pdb (PDB file Path)
-*  --chainid (Chain ID)
+*  --pdb (PDB file path)
+*  --chainid (chain ID)
 *  --dssppath (DSSP binary file path; Default: /usr/bin/dssp)
-*  --clustering (The clustering method: "spectral" or "KK"; default: "SP")
-*  --numdomains (The number of domains; default: automatic)
-*  --minsegsize (Minimum segment size; default: 27)
-*  --mindomainsize (Minimum domain size; default: 27)
-*  --maxalphahelix (Maximum size of alpha-helix to contract; default: 30)
-*  --maxsegdomratio (Maximum ratio of segment count to domain count; default: 1.5)
-*  --kernel (The type of graph node kernel; default: LED)
-*  --dispall (Display all candidate partitionings)
-*  --bw_a (coefficient of bandwidth coefficient)
+*  --clustering (the clustering method: "SP" or "KK"; default: "SP")
+*  --numdomains (the number of domains; default: automatic)
+*  --minsegsize (minimum segment size; default: 27)
+*  --mindomainsize (minimum domain size; default: 27)
+*  --maxalphahelix (maximum size of alpha-helix to merge; default: 30)
+*  --maxsegdomratio (maximum ratio of segment count to domain count; default: 1.5)
+*  --kernel (kernel type; default: LED)
+*  --dispall (display all candidate partitionings)
+*  --bw_a (coefficient of radius of gyration to calculate bandwidth coefficient)
 *  --bw_b (exponent of radius of gyration to calculate bandwidth parameter)
 
 Two of the arguments are mandatory: --pdb and --chainid. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --bw_a and --bw_b should be passed simultaneously. These are coefficient (a) and exponent (b) of the Rg, respectively, which determine the bandwidth parameter (β or t) for each kernel (a * Rg ^ b). Default values of these arguments depend on the kernel type and the clustering algorithm.
