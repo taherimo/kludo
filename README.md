@@ -31,9 +31,9 @@ The arguments are as follows:
 *  --kernel (The type of graph node kernel; default: LED)
 *  --dispall (Display all candidate partitionings)
 *  --bw_a (coefficient of bandwidth coefficient)
-*  --bw_b (power of radius of gyration to calculate bandwidth parameter)
+*  --bw_b (exponent of radius of gyration to calculate bandwidth parameter)
 
-Two of the arguments are mandatory: --pdb and --chainid. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --bw_x and --bw_y should be passed simultaneously. These are coefficient (x) and exponent (y) of the node count (n), respectively, which determine the bandwidth parameter (β or t) for each kernel (t=xn^y). Default values of the arguments --bw_x and --bw_y depend on the kernel type and the clustering algorithm.
+Two of the arguments are mandatory: --pdb and --chainid. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --bw_a and --bw_b should be passed simultaneously. These are coefficient (a) and exponent (b) of the Rg, respectively, which determine the bandwidth parameter (β or t) for each kernel (a * Rg ^ b). Default values of these arguments depend on the kernel type and the clustering algorithm.
 
 Fore the argument --kernel users can choose one of the following options:
 * markov-diff (Markov Diffusion Kernel, default)
