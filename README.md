@@ -36,14 +36,14 @@ The arguments are as follows:
 Two of the arguments are mandatory: --pdb and --chainid. If you don't pass values to the rest of arguments, default values are used. Values of the arguments --bw_a and --bw_b should be passed simultaneously. These are coefficient (a) and exponent (b) of the Rg, respectively, which determine the bandwidth parameter (β or t) for each kernel (a * Rg ^ b). Default values of these arguments depend on the kernel type and the clustering algorithm.
 
 Fore the argument --kernel users can choose one of the following options:
-* markov-diff (Markov Diffusion Kernel, default)
-* lap-exp-diff (Laplacian Exponential Diffusion Kernel)
-* reg-lap-diff (Regularized Laplacian Diffusion Kernel)
-* markov-exp-diff (Markov Exponential Diffusion Kernel)
+* LED (Laplacian Exponential Diffusion Kernel)
+* MD (Markov Diffusion Kernel, default)
+* MED (Markov Exponential Diffusion Kernel)
+* RL (Regularized Laplacian Diffusion Kernel)
 
 Also for the argument --clustering there are following options:
-* spectral (default)
-* kernel-kmeans
+* SP (spectral, default)
+* KK (kernel k-means)
 
 As an example assuming that the pdb file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) is stored in the path ~/1cid.pdb the following command runs KluDo with the minimal arguments:
 
