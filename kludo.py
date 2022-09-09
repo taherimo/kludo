@@ -10,7 +10,6 @@ from sklearn.metrics import silhouette_score
 from kernels import *
 from protein_structure import *
 from tslearn.clustering import KernelKMeans
-# import multiprocessing as mp
 import re
 from sklearn.preprocessing import scale
 import unidip.dip as dip
@@ -107,87 +106,6 @@ def _gcm_(cdf, idxs):
         work_cdf = work_cdf[minslope_idx:]
         work_idxs = work_idxs[minslope_idx:]
     return np.array(np.array(gcm)), np.array(touchpoints)
-
-# def _lcm_(cdf, idxs):
-#     g, t = _gcm_(1-cdf[::-1], idxs.max() - idxs[::-1])
-#     return 1-g[::-1], len(cdf) - 1 - t[::-1]
-#
-# def _touch_diffs_(part1, part2, touchpoints):
-#     diff = np.abs((part2[touchpoints] - part1[touchpoints]))
-#     return diff.max(), diff
-#
-#
-# def dip_fn(dat, is_hist=False, just_dip=False):
-#     """
-#         Compute the Hartigans' dip statistic either for a histogram of
-#         samples (with equidistant bins) or for a set of samples.
-#     """
-#     if is_hist:
-#         histogram = dat
-#         idxs = np.arange(len(histogram))
-#     else:
-#         counts = collections.Counter(dat)
-#         idxs = np.msort(list(counts.keys()))
-#         histogram = np.array([counts[i] for i in idxs])
-#
-#     # check for case 1<N<4 or all identical values
-#     if len(idxs) <= 4 or idxs[0] == idxs[-1]:
-#         left = []
-#         right = [1]
-#         d = 0.0
-#         return d if just_dip else (d, (None, idxs, left, None, right, None))
-#
-#     cdf = np.cumsum(histogram, dtype=float)
-#     cdf /= cdf[-1]
-#
-#     work_idxs = idxs
-#     work_histogram = np.asarray(histogram, dtype=float) / np.sum(histogram)
-#     work_cdf = cdf
-#
-#     D = 0
-#     left = [0]
-#     right = [1]
-#
-#     while True:
-#         left_part, left_touchpoints = _gcm_(work_cdf-work_histogram, work_idxs)
-#         right_part, right_touchpoints = _lcm_(work_cdf, work_idxs)
-#
-#         d_left, left_diffs = _touch_diffs_(left_part,
-#                                            right_part, left_touchpoints)
-#         d_right, right_diffs = _touch_diffs_(left_part,
-#                                              right_part, right_touchpoints)
-#
-#         if d_right > d_left:
-#             xr = right_touchpoints[d_right == right_diffs][-1]
-#             xl = left_touchpoints[left_touchpoints <= xr][-1]
-#             d = d_right
-#         else:
-#             xl = left_touchpoints[d_left == left_diffs][0]
-#             xr = right_touchpoints[right_touchpoints >= xl][0]
-#             d = d_left
-#
-#         left_diff = np.abs(left_part[:xl+1] - work_cdf[:xl+1]).max()
-#         right_diff = np.abs(right_part[xr:]
-#                             - work_cdf[xr:]
-#                             + work_histogram[xr:]).max()
-#
-#         if d <= D or xr == 0 or xl == len(work_cdf):
-#             the_dip = max(np.abs(cdf[:len(left)] - left).max(),
-#                           np.abs(cdf[-len(right)-1:-1] - right).max())
-#             if just_dip:
-#                 return the_dip/2
-#             else:
-#                 return the_dip/2, (cdf, idxs, left, left_part, right, right_part)
-#         else:
-#             D = max(D, left_diff, right_diff)
-#
-#         work_cdf = work_cdf[xl:xr+1]
-#         work_idxs = work_idxs[xl:xr+1]
-#         work_histogram = work_histogram[xl:xr+1]
-#
-#         left[len(left):] = left_part[1:xl+1]
-#         right[:0] = right_part[xr:-1]
-#
 
 
 def get_segments(assignment, query=None):
@@ -470,9 +388,6 @@ def cluster(num_domains, diff_kernel, min_seg_size, max_segdom_ratio, distance_m
 
     sil_score = silhouette_score(distance_matrix[hydphob_res_mask,:][:,hydphob_res_mask], labels=labels[hydphob_res_mask], metric="precomputed")
 
-    # sil_score = np.average(silhouette_samples(distance_matrix, labels=labels, metric="precomputed"), weights=np.array(rel_hydphob)**2)
-
-    # sil_score = w_sil_score(distance_matrix, labels, (rel_hydphob * 10)**4)
 
     for label in set(labels):
         if np.count_nonzero(labels == label) < min_domain_size:
@@ -571,8 +486,9 @@ help_text = """
   Type should be choosen from:
    LED
    MD
-   RL
    MED
+   RL
+   
 
   ***
   The parameters bw_a and bw_b are coefficient (x) and exponent (y)
@@ -728,24 +644,24 @@ def run(pdb_file_path, chain_id, num_domains=(1,99), min_seg_size=27, max_alpha_
     if bw_a == None and bw_b == None:
         if kernel == 'LED':
             if clustering_method == 'SP':
-                bw_a = 0.005
+                bw_a = 0.004
             else:
                 bw_a = 0.006
         elif kernel == 'MD':
             if clustering_method == 'SP':
-                bw_a = 0.65
+                bw_a = 0.8
             else:
-                bw_a = 0.2
+                bw_a = 0.25
         elif kernel == 'RL':
             if clustering_method == 'SP':
-                bw_a = 0.021
+                bw_a = 0.022
             else:
                 bw_a = 0.021
         elif kernel == 'MED':
             if clustering_method == 'SP':
-                bw_a = 0.45
+                bw_a = 0.35
             else:
-                bw_a = 0.45
+                bw_a = 0.4
 
         bw_b = 2
 
@@ -1001,19 +917,9 @@ def extract_features(aminoacids, aminoacid_ca_coords, radius_of_gyration, n, gra
     pca_expl_var = pca.explained_variance_
 
 
-    # hopkins_score1 = hopkins(scale(X_transformed[:,:3], with_std=False), X_transformed.shape[0])
-    # hopkins_scores = []
-    # dt_pc1_scores, dt_pc2_scores, dt_pc3_scores = [], [], []
-    # for _ in range(100):
-    #     hopkins_scores.append(hopkins(ca_coords_centered, len(aminoacids)))
-        # dt_pc1_scores.append(dip.diptst(pca_ca_coords_centered[:, 0])[1])
-        # dt_pc2_scores.append(dip.diptst(pca_ca_coords_centered[:, 1])[1])
-        # dt_pc3_scores.append(dip.diptst(pca_ca_coords_centered[:, 2])[1])
-
     hopkins_scores = [hopkins(ca_coords_centered, len(aminoacids)) for _ in range(100)]
 
     hopkins_score = np.mean(hopkins_scores)
-    # hopkins_score_var = np.var(hopkins_scores)
 
     bins_pc1 = np.arange(pca_ca_coords_centered[:, 0].min(), pca_ca_coords_centered[:, 0].max() + 4, step=4)
     bins_pc2 = np.arange(pca_ca_coords_centered[:, 1].min(), pca_ca_coords_centered[:, 1].max() + 4, step=4)
@@ -1064,9 +970,6 @@ def extract_features(aminoacids, aminoacid_ca_coords, radius_of_gyration, n, gra
     betweenness_acc_corr = np.corrcoef(betweenness, acc)[0, 1]
     w_betweenness_acc_corr = np.corrcoef(w_betweenness, acc)[0, 1]
 
-    # if math.isnan(betweenness_acc_corr):
-    #     betweenness_acc_corr = 0
-
 
     e = len(graph.es)
     w_e = sum(graph.es['weight'])
@@ -1074,8 +977,6 @@ def extract_features(aminoacids, aminoacid_ca_coords, radius_of_gyration, n, gra
     e_n_ratio = e / n
     w_e_n_ratio = w_e / n
 
-
-    # w = np.ones(n)
 
     pca_w_var_degree = weighted_variance(pca_ca_coords_centered, degree)
     pca_w_var_w_degree = weighted_variance(pca_ca_coords_centered, w_degree)
