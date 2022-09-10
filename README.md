@@ -45,10 +45,10 @@ Also for the argument --clustering there are following options:
 * SP (Spectral clustering, default)
 * KK (Kernel k-means)
 
-As an example assuming that the pdb file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) is stored in the path ~/1cid.pdb the following command runs KluDo with the minimal arguments:
+As an example assuming that the pdb file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) is stored in the current path the following command runs KluDo with the minimal arguments:
 
 ```sh
-$ python3 kludo.py --pdb ~/1cid.pdb --chainid A
+$ python3 kludo.py --pdb 1cid.pdb --chainid A
 ```
 ## Web application
 KluDo is also available as a web application at: [http://www.cbph.ir/tools/kludo](http://www.cbph.ir/tools/kludo)
