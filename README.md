@@ -42,8 +42,8 @@ Fore the argument --kernel users can choose one of the following options:
 * RL (Regularized Laplacian Diffusion Kernel)
 
 Also for the argument --clustering there are following options:
-* SP (spectral, default)
-* KK (kernel k-means)
+* SP (Spectral clustering, default)
+* KK (Kernel k-means)
 
 As an example assuming that the pdb file [1cid.pdb](https://files.rcsb.org/download/1CID.pdb) is stored in the path ~/1cid.pdb the following command runs KluDo with the minimal arguments:
 
