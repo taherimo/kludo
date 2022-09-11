@@ -80,14 +80,14 @@ def lap_exp_diff_kernel(graph, beta):
 
 def calc_kernel(graph, type, bw):
     kernel_matrix = None
-    if type == 'lap-exp-diff':
+    if type == 'LED':
         kernel_matrix = lap_exp_diff_kernel(graph, bw)
-    elif type == 'markov-diff':
+    elif type == 'MD':
         kernel_matrix = markov_diff_kernel(graph, bw)
-    elif type == 'reg-lap-diff':
-        kernel_matrix = reg_lap_kernel(graph, bw)
-    elif type == 'markov-exp-diff':
+    elif type == 'MED':
         kernel_matrix = markov_exp_diff_kernel(graph, bw)
+    elif type == 'RL':
+        kernel_matrix = reg_lap_kernel(graph, bw)
     return kernel_matrix
 
 
