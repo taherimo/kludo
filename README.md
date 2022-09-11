@@ -56,4 +56,4 @@ $ python3 kludo.py --pdb 1cid.pdb --chainid A
 KluDo is also available as a web application at: [http://www.cbph.ir/tools/kludo](http://www.cbph.ir/tools/kludo)
 
 ## Citation
-Taheri-Ledari M, Zandieh A, Shariatpanahi SP, Eslahchi C, "Assignment of structural domains in proteins using diffusion kernels on graphs", BMC Bioinformatics, vol. 23, no. 1, 2022, p. 369. [Read the paper] (https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-022-04902-9)
+Taheri-Ledari M, Zandieh A, Shariatpanahi SP, Eslahchi C, "Assignment of structural domains in proteins using diffusion kernels on graphs", BMC Bioinformatics, vol. 23, no. 1, 2022, p. 369. [Read the paper](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-022-04902-9)
