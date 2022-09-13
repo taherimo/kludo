@@ -11,8 +11,8 @@ It is recommended to run KluDo by a Python version of 3.6 or more, however there
 * [sklearn](http://scikit-learn.github.io/stable) (Python)
 * [tslearn](https://tslearn.readthedocs.io/) (Python)
 * [prettytable](https://pypi.org/project/PrettyTable/) (Python)
-* [unidip] (https://benjamindoran.github.io/motif-paper) (Python)
-& [pyclustertend] (https://pyclustertend.readthedocs.io/en/latest/) (Python)
+* [unidip](https://benjamindoran.github.io/motif-paper) (Python)
+& [pyclustertend](https://pyclustertend.readthedocs.io/en/latest/) (Python)
 * [DSSP](https://swift.cmbi.umcn.nl/gv/dssp/) (Linux/Windows/Mac binary executable)
 
 Furthermore, it is required to have the single/multi-domain classifier in the main directory. Click [here](https://www.dropbox.com/s/a1ee4wzfmrrdtke/sm_classifier.pkl.bz2?dl=0) to download it from Dropbox.
